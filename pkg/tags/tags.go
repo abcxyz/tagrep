@@ -17,5 +17,6 @@ package tags
 type Tag struct{}
 
 func ParseTags(v string) []*Tag {
+	// TODO(dcreey): Parse all tags.
 	return []*Tag{}
 }

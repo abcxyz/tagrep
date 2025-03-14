@@ -29,15 +29,10 @@ import (
 	"github.com/abcxyz/tagrep/pkg/tags"
 )
 
-var _ cli.Command = (*ExportCommand)(nil)
+var _ cli.Command = (*ParseCommand)(nil)
 
-// RunResult is the result of a apply operation.
-type RunResult struct {
-	commentDetails string
-}
-
-// ExportCommand performs terraform apply on the given working directory.
-type ExportCommand struct {
+// ParseCommand fetches and parses a request and prints out all tags.
+type ParseCommand struct {
 	cli.BaseCommand
 
 	platformConfig platform.Config
@@ -48,13 +43,13 @@ type ExportCommand struct {
 }
 
 // Desc provides a short, one-line description of the command.
-func (c *ExportCommand) Desc() string {
+func (c *ParseCommand) Desc() string {
 	return "Export request tags to env."
 }
 
 // Help is the long-form help output to include usage instructions and flag
 // information.
-func (c *ExportCommand) Help() string {
+func (c *ParseCommand) Help() string {
 	return `
 Usage: {{ COMMAND }} [options]
 
@@ -62,7 +57,7 @@ Usage: {{ COMMAND }} [options]
 `
 }
 
-func (c *ExportCommand) Flags() *cli.FlagSet {
+func (c *ParseCommand) Flags() *cli.FlagSet {
 	set := c.NewFlagSet()
 
 	c.platformConfig.RegisterFlags(set)
@@ -71,7 +66,7 @@ func (c *ExportCommand) Flags() *cli.FlagSet {
 	return set
 }
 
-func (c *ExportCommand) Run(ctx context.Context, args []string) error {
+func (c *ParseCommand) Run(ctx context.Context, args []string) error {
 	metricswrap.WriteMetric(ctx, "command_request", 1)
 
 	f := c.Flags()
@@ -94,7 +89,7 @@ func (c *ExportCommand) Run(ctx context.Context, args []string) error {
 }
 
 // Process handles the main logic for the tagrep request.
-func (c *ExportCommand) Process(ctx context.Context) (merr error) {
+func (c *ParseCommand) Process(ctx context.Context) (merr error) {
 	logger := logging.FromContext(ctx)
 	logger.DebugContext(ctx, "starting tagrep request",
 		"platform", c.platformConfig.Type)

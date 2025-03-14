@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package request
+package issue
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -24,7 +25,7 @@ import (
 	"github.com/abcxyz/tagrep/pkg/platform"
 )
 
-func TestApply_Process(t *testing.T) {
+func TestParse_Process(t *testing.T) {
 	t.Parallel()
 
 	ctx := logging.WithLogger(t.Context(), logging.TestLogger(t))
@@ -33,13 +34,15 @@ func TestApply_Process(t *testing.T) {
 		name                  string
 		err                   string
 		expPlatformClientReqs []*platform.Request
+		expStdout             string
+		expStderr             string
 	}{
 		{
 			name: "success",
 			expPlatformClientReqs: []*platform.Request{
 				{
-					Name:   "Status",
-					Params: []any{platform.StatusSuccess, &platform.StatusParams{HasDiff: true, Details: "terraform apply success", Dir: "testdir", Operation: "apply"}},
+					Name:   "GetIssueBody",
+					Params: []any{},
 				},
 			},
 		},
@@ -51,7 +54,7 @@ func TestApply_Process(t *testing.T) {
 
 			mockPlatformClient := &platform.MockPlatform{}
 
-			c := &ApplyCommand{
+			c := &ParseCommand{
 				platformClient: mockPlatformClient,
 			}
 
@@ -64,6 +67,13 @@ func TestApply_Process(t *testing.T) {
 
 			if diff := cmp.Diff(mockPlatformClient.Reqs, tc.expPlatformClientReqs); diff != "" {
 				t.Errorf("Platform calls not as expected; (-got,+want): %s", diff)
+			}
+
+			if got, want := strings.TrimSpace(stdout.String()), strings.TrimSpace(tc.expStdout); !strings.Contains(got, want) {
+				t.Errorf("expected stdout\n\n%s\n\nto contain\n\n%s\n\n", got, want)
+			}
+			if got, want := strings.TrimSpace(stderr.String()), strings.TrimSpace(tc.expStderr); !strings.Contains(got, want) {
+				t.Errorf("expected stderr\n\n%s\n\nto contain\n\n%s\n\n", got, want)
 			}
 		})
 	}

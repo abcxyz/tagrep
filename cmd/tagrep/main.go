@@ -45,10 +45,10 @@ var rootCmd = func() cli.Command {
 		Version: version.HumanVersion,
 		Commands: map[string]cli.CommandFactory{
 			"issue": func() cli.Command {
-				return &issue.ExportCommand{}
+				return &issue.ParseCommand{}
 			},
 			"request": func() cli.Command {
-				return &request.ExportCommand{}
+				return &request.ParseCommand{}
 			},
 		},
 	}
