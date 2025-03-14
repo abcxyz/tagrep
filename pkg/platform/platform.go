@@ -55,7 +55,6 @@ type Platform interface {
 
 // NewPlatform creates a new platform based on the provided type.
 func NewPlatform(ctx context.Context, cfg *Config) (Platform, error) {
-
 	if strings.EqualFold(cfg.Type, TypeGitHub) {
 		gc, err := NewGitHub(ctx, &cfg.GitHub)
 		if err != nil {

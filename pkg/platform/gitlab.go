@@ -22,9 +22,7 @@ import (
 	"github.com/abcxyz/pkg/cli"
 )
 
-var (
-	_ Platform = (*GitLab)(nil)
-)
+var _ Platform = (*GitLab)(nil)
 
 // GitLab implements the Platform interface.
 type GitLab struct {

@@ -22,11 +22,7 @@ import (
 	"github.com/abcxyz/pkg/cli"
 )
 
-const githubMaxCommentLength = 65536
-
-var (
-	_ Platform = (*GitHub)(nil)
-)
+var _ Platform = (*GitHub)(nil)
 
 // GitHub implements the Platform interface.
 type GitHub struct {
