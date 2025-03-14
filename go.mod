@@ -1,6 +1,6 @@
 module github.com/abcxyz/tagrep
 
-go 1.25
+go 1.24
 
 require (
 	github.com/abcxyz/abc-updater v0.4.0
