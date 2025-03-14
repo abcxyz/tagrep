@@ -1,0 +1,39 @@
+name: 'Lint and test'
+
+on:
+  push:
+    branches:
+      - 'main'
+  pull_request:
+    branches:
+      - 'main'
+  workflow_dispatch:
+  workflow_call:
+
+concurrency:
+  group: '${{ github.workflow }}-${{ github.head_ref || github.ref }}'
+  cancel-in-progress: true
+
+jobs:
+  # TODO: uncomment the jobs that are relevant to your repo and delete this
+  # example step.
+  example:
+    if: '${{ false }}'
+    runs-on: 'ubuntu-latest'
+    steps:
+      - run: 'echo "TODO"'
+
+  # go_lint:
+  #   uses: 'abcxyz/pkg/.github/workflows/go-lint.yml@main' # ratchet:exclude
+
+  # terraform_lint:
+  #   uses: 'abcxyz/pkg/.github/workflows/terraform-lint.yml@main' # ratchet:exclude
+  #   with:
+  #     directory: 'terraform/'
+  #     terraform_version: '1.7.4'
+
+  # yaml_lint:
+  #   uses: 'abcxyz/pkg/.github/workflows/yaml-lint.yml@main' # ratchet:exclude
+
+  # go_test:
+  #   uses: 'abcxyz/pkg/.github/workflows/go-test.yml@main' # ratchet:exclude
