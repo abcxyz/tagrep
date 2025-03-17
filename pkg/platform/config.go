@@ -44,7 +44,7 @@ func (c *Config) RegisterFlags(set *cli.FlagSet) {
 		Name:    "platform",
 		Target:  &c.Type,
 		Example: "github",
-		Usage:   fmt.Sprintf("The code review platform for Guardian to integrate with. Allowed values are %q.", SortedTypes),
+		Usage:   fmt.Sprintf("The code review platform for tagrep to integrate with. Allowed values are %q.", SortedTypes),
 		Predict: complete.PredictFunc(func(prefix string) []string {
 			return SortedTypes
 		}),
