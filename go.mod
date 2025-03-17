@@ -5,16 +5,18 @@ go 1.24
 require (
 	github.com/abcxyz/abc-updater v0.4.0
 	github.com/abcxyz/pkg v1.5.0
+	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v53 v53.2.0
 	github.com/posener/complete/v2 v2.1.0
+	github.com/sethvargo/go-githubactions v1.3.0
 	github.com/sethvargo/go-retry v0.3.0
 	gitlab.com/gitlab-org/api/client-go v0.125.0
+	golang.org/x/oauth2 v0.26.0
 )
 
 require (
 	github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 // indirect
 	github.com/cloudflare/circl v1.3.3 // indirect
-	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/renameio v1.0.1 // indirect
 	github.com/hashicorp/go-cleanhttp v0.5.2 // indirect
@@ -25,7 +27,6 @@ require (
 	github.com/sethvargo/go-envconfig v1.1.1 // indirect
 	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/oauth2 v0.26.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.10.0 // indirect

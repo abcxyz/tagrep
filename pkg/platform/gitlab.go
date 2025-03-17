@@ -54,8 +54,8 @@ type gitLabConfig struct {
 	InitialRetryDelay time.Duration
 	MaxRetryDelay     time.Duration
 
-	GuardianGitLabToken string
-	GitLabBaseURL       string
+	TagrepGitLabToken string
+	GitLabBaseURL     string
 
 	GitLabProjectID       int
 	GitLabMergeRequestIID int
@@ -105,9 +105,9 @@ func (c *gitLabConfig) RegisterFlags(set *cli.FlagSet) {
 	cfgDefaults.Load()
 
 	f.StringVar(&cli.StringVar{
-		Name:    "guardian-gitlab-token",
-		EnvVar:  "GUARDIAN_GITLAB_TOKEN",
-		Target:  &c.GuardianGitLabToken,
+		Name:    "tagrep-gitlab-token",
+		EnvVar:  "TAGREP_GITLAB_TOKEN",
+		Target:  &c.TagrepGitLabToken,
 		Default: cfgDefaults.CIJobToken,
 		Usage:   "The GitLab access token to make GitLab API calls.",
 		Hidden:  true,
@@ -167,7 +167,7 @@ func NewGitLab(ctx context.Context, cfg *gitLabConfig) (*GitLab, error) {
 		return nil, fmt.Errorf("gitlab base url is required")
 	}
 
-	c, err := gitlab.NewClient(cfg.GuardianGitLabToken, gitlab.WithBaseURL(cfg.GitLabBaseURL))
+	c, err := gitlab.NewClient(cfg.TagrepGitLabToken, gitlab.WithBaseURL(cfg.GitLabBaseURL))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create gitlab client: %w", err)
 	}
@@ -230,7 +230,7 @@ func validateGitLabInputs(cfg *gitLabConfig) error {
 		merr = errors.Join(merr, fmt.Errorf("gitlab merge request id or issue id is required"))
 	}
 
-	if cfg.GuardianGitLabToken == "" {
+	if cfg.TagrepGitLabToken == "" {
 		merr = errors.Join(merr, fmt.Errorf("gitlab token is required"))
 	}
 
