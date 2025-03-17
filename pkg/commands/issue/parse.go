@@ -103,5 +103,9 @@ func (c *ParseCommand) Process(ctx context.Context) (merr error) {
 	logger.DebugContext(ctx, "parsed tags from issue body",
 		"tags", ts)
 
+	for _, t := range ts {
+		c.Stdout().Write([]byte(fmt.Sprintf("%s=%s", t.Name, t.Value)))
+	}
+
 	return merr
 }

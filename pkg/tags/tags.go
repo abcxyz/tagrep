@@ -11,10 +11,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// tags contains logic for parsing tags from a multiline string.
+
+// Package tags contains logic for parsing tags from a multiline string.
 package tags
 
-type Tag struct{}
+// Tag represents the tag name and values from the issue or request.
+type Tag struct {
+	// Name of the tag.
+	Name string
+	// Value of the tag.
+	Value string
+}
 
 func ParseTags(v string) []*Tag {
 	// TODO(dcreey): Parse all tags.
