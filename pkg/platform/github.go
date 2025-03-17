@@ -362,7 +362,7 @@ func (g *GitHub) GetRequestBody(ctx context.Context) (string, error) {
 	if err := g.withRetries(ctx, func(ctx context.Context) error {
 		ghPullRequest, resp, err := g.client.PullRequests.Get(ctx, g.cfg.GitHubOwner, g.cfg.GitHubRepo, g.cfg.GitHubPullRequestNumber)
 		if err != nil {
-			return maybeRetryable(resp, fmt.Errorf("failed to get pull request: %w", err))
+			return githubMaybeRetryable(resp, fmt.Errorf("failed to get pull request: %w", err))
 		}
 
 		body = *ghPullRequest.Body
@@ -385,7 +385,7 @@ func (g *GitHub) GetIssueBody(ctx context.Context) (string, error) {
 	if err := g.withRetries(ctx, func(ctx context.Context) error {
 		ghIssue, resp, err := g.client.Issues.Get(ctx, g.cfg.GitHubOwner, g.cfg.GitHubRepo, g.cfg.GitHubPullRequestNumber)
 		if err != nil {
-			return maybeRetryable(resp, fmt.Errorf("failed to get pull request: %w", err))
+			return githubMaybeRetryable(resp, fmt.Errorf("failed to get pull request: %w", err))
 		}
 
 		body = *ghIssue.Body
@@ -427,7 +427,7 @@ func validateGitHubInputs(cfg *gitHubConfig) error {
 	return merr
 }
 
-func maybeRetryable(resp *github.Response, err error) error {
+func githubMaybeRetryable(resp *github.Response, err error) error {
 	if _, ok := ignoredStatusCodes[resp.StatusCode]; !ok {
 		return retry.RetryableError(err)
 	}
