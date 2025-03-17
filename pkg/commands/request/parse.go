@@ -104,7 +104,7 @@ func (c *ParseCommand) Process(ctx context.Context) (merr error) {
 		"tags", ts)
 
 	for _, t := range ts {
-		if err := c.Stdout().Write([]byte(fmt.Sprintf("%s=%s", t.Name, t.Value))); err != nil {
+		if _, err := c.Stdout().Write([]byte(fmt.Sprintf("%s=%s", t.Name, t.Value))); err != nil {
 			merr = errors.Join(merr, fmt.Errorf("failed to write tag(%s): %w", t.Name, err))
 		}
 	}
