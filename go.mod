@@ -7,8 +7,10 @@ require (
 	github.com/abcxyz/pkg v1.5.0
 	github.com/google/go-github/v53 v53.2.0
 	github.com/posener/complete/v2 v2.1.0
+	github.com/sethvargo/go-githubactions v1.3.0
 	github.com/sethvargo/go-retry v0.3.0
 	gitlab.com/gitlab-org/api/client-go v0.125.0
+	golang.org/x/oauth2 v0.26.0
 )
 
 require (
@@ -25,7 +27,6 @@ require (
 	github.com/sethvargo/go-envconfig v1.1.1 // indirect
 	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/net v0.35.0 // indirect
-	golang.org/x/oauth2 v0.26.0 // indirect
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
