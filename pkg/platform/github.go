@@ -91,12 +91,10 @@ type gitHubConfigDefaults struct {
 	IssueNumber       int
 }
 
-func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
-	d := &gitHubConfigDefaults{}
-
+// Load retrieves the predefined GitHub CI/CD variables from environment.
+func (c *gitHubConfigDefaults) Load() {
 	githubContext, _ := githubactions.New().Context()
-	d.Owner, d.Repo = githubContext.Repo()
-
+	c.Owner, c.Repo = githubContext.Repo()
 	// we want a typed struct so we will "re-parse" the event payload based on event name.
 	// ignore err because we have no way of returning an error via the flags.Register function.
 	// this is ok beause this is just for defaulting values from the environment.
@@ -105,19 +103,19 @@ func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 	if githubContext.EventName == "pull_request" {
 		var event github.PullRequestEvent
 		if err := json.Unmarshal(data, &event); err == nil {
-			d.PullRequestNumber = event.GetNumber()
-			d.PullRequestBody = event.GetPullRequest().GetBody()
+			c.PullRequestNumber = event.GetNumber()
+			c.PullRequestBody = event.GetPullRequest().GetBody()
 		} else {
-			logging.DefaultLogger().Warn("parsing pull_request event context failed", "error", err)
+			logging.DefaultLogger().Warn("parsing pull_request event context failed", "error", err) //nolint:sloglint
 		}
 	}
 	if githubContext.EventName == "pull_request_target" {
 		var event github.PullRequestTargetEvent
 		if err := json.Unmarshal(data, &event); err == nil {
-			d.PullRequestNumber = event.GetNumber()
-			d.PullRequestBody = event.GetPullRequest().GetBody()
+			c.PullRequestNumber = event.GetNumber()
+			c.PullRequestBody = event.GetPullRequest().GetBody()
 		} else {
-			logging.DefaultLogger().Warn("parsing pull_request_target event context failed", "error", err)
+			logging.DefaultLogger().Warn("parsing pull_request_target event context failed", "error", err) //nolint:sloglint
 		}
 	}
 	if githubContext.EventName == "merge_group" {
@@ -126,20 +124,25 @@ func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 			matches := mergeGroupPullRequestNumberPattern.FindStringSubmatch(event.GetMergeGroup().GetHeadRef())
 			if len(matches) == 2 {
 				if v, err := strconv.Atoi(matches[1]); err == nil {
-					d.PullRequestNumber = v
+					c.PullRequestNumber = v
 				} else {
-					logging.DefaultLogger().Warn("parsing merge_group head_ref for pull request number failed",
+					logging.DefaultLogger().Warn("parsing merge_group head_ref for pull request number failed", //nolint:sloglint
 						"head_ref", event.GetMergeGroup().GetHeadRef(),
 						"error", err)
 				}
 			} else {
-				logging.DefaultLogger().Warn("parsing merge_group head_ref for pull request number failed", "head_ref", event.GetMergeGroup().GetHeadRef())
+				logging.DefaultLogger().Warn("parsing merge_group head_ref for pull request number failed", "head_ref", event.GetMergeGroup().GetHeadRef()) //nolint:sloglint
 			}
 			// Pull request body is not available on the merge_group event.
 		} else {
-			logging.DefaultLogger().Warn("parsing merge_group event context failed", "error", err)
+			logging.DefaultLogger().Warn("parsing merge_group event context failed", "error", err) //nolint:sloglint
 		}
 	}
+}
+
+func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
+	d := &gitHubConfigDefaults{}
+	d.Load()
 
 	f := set.NewSection("GITHUB OPTIONS")
 
