@@ -100,13 +100,11 @@ func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) 
 	data, _ := json.Marshal(githubContext.Event) //nolint:errchkjson // Shouldnt affect defaults
 
 	if githubContext.EventName == "pull_request" {
-		fmt.Println("HIT-PR", githubContext)
 		var event github.PullRequestEvent
 		if err := json.Unmarshal(data, &event); err == nil {
 			c.PullRequestNumber = event.GetNumber()
 			c.PullRequestBody = event.GetPullRequest().GetBody()
 		} else {
-			fmt.Println("HIT-PR else", githubContext)
 			logging.DefaultLogger().Warn("parsing pull_request event context failed", "error", err) //nolint:sloglint
 		}
 	}
