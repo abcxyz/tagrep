@@ -42,17 +42,12 @@ var (
 	}
 )
 
-// Based on https://docs.gitlab.com/ee/administration/instance_limits.html#size-of-comments-and-descriptions-of-issues-merge-requests-and-epics.
-const gitlabMaxCommentLength = 1000000
-
 // TODO(gjonathanhong): Implement GitLab platform.
 
 // GitLab implements the Platform interface.
 type GitLab struct {
 	cfg    *gitLabConfig
 	client *gitlab.Client
-
-	logURL string
 }
 
 type gitLabConfig struct {
