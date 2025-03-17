@@ -7,6 +7,7 @@ require (
 	github.com/abcxyz/pkg v1.5.0
 	github.com/google/go-github/v53 v53.2.0
 	github.com/posener/complete/v2 v2.1.0
+	github.com/sethvargo/go-retry v0.3.0
 	gitlab.com/gitlab-org/api/client-go v0.125.0
 )
 
