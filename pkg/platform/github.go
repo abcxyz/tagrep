@@ -51,7 +51,7 @@ type GitHub struct {
 }
 
 // mergeGroupPullRequestNumberPattern is a Regex pattern used to parse the pull request number from the merge_group ref.
-var mergeGroupPullRequestNumberPattern = regexp.MustCompile(`refs\/heads\/gh-readonly-queue\/main\/pr-(\d*)`)
+var mergeGroupPullRequestNumberPattern = regexp.MustCompile(`refs\/heads\/gh-readonly-queue\/(?:.+)\/pr-(\d*)`)
 
 // gitHubConfig is the config values for the GitHub client.
 type gitHubConfig struct {
@@ -61,7 +61,7 @@ type gitHubConfig struct {
 	MaxRetryDelay     time.Duration
 
 	// Auth
-	GuardianGitHubToken     string
+	TagrepGitHubToken       string
 	GitHubToken             string
 	GitHubOwner             string
 	GitHubRepo              string
@@ -92,8 +92,7 @@ type gitHubConfigDefaults struct {
 }
 
 // Load retrieves the predefined GitHub CI/CD variables from environment.
-func (c *gitHubConfigDefaults) Load() {
-	githubContext, _ := githubactions.New().Context()
+func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) {
 	c.Owner, c.Repo = githubContext.Repo()
 	// we want a typed struct so we will "re-parse" the event payload based on event name.
 	// ignore err because we have no way of returning an error via the flags.Register function.
@@ -101,11 +100,13 @@ func (c *gitHubConfigDefaults) Load() {
 	data, _ := json.Marshal(githubContext.Event) //nolint:errchkjson // Shouldnt affect defaults
 
 	if githubContext.EventName == "pull_request" {
+		fmt.Println("HIT-PR", githubContext)
 		var event github.PullRequestEvent
 		if err := json.Unmarshal(data, &event); err == nil {
 			c.PullRequestNumber = event.GetNumber()
 			c.PullRequestBody = event.GetPullRequest().GetBody()
 		} else {
+			fmt.Println("HIT-PR else", githubContext)
 			logging.DefaultLogger().Warn("parsing pull_request event context failed", "error", err) //nolint:sloglint
 		}
 	}
@@ -141,19 +142,20 @@ func (c *gitHubConfigDefaults) Load() {
 }
 
 func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
+	gitHubContext, _ := githubactions.New().Context()
 	d := &gitHubConfigDefaults{}
-	d.Load()
+	d.Load(gitHubContext)
 
 	f := set.NewSection("GITHUB OPTIONS")
 
 	f.StringVar(&cli.StringVar{
-		Name:   "guardian-github-token",
-		EnvVar: "GUARDIAN_GITHUB_TOKEN",
-		Target: &c.GuardianGitHubToken,
-		Usage: `The GitHub access token for Guardian to make GitHub API calls.
+		Name:   "tagrep-github-token",
+		EnvVar: "TAGREP_GITHUB_TOKEN",
+		Target: &c.TagrepGitHubToken,
+		Usage: `The GitHub access token for Tagrep to make GitHub API calls.
 This is separate from GITHUB_TOKEN because Terraform uses GITHUB_TOKEN to authenticate
 to the GitHub APIs also. Splitting this up allows users to follow least privilege
-for the caller (e.g. Guardian vs Terraform). If not supplied this will default to
+for the caller (e.g. Tagrep vs Terraform). If not supplied this will default to
 GITHUB_TOKEN.`,
 	})
 
@@ -311,7 +313,7 @@ func NewGitHub(ctx context.Context, cfg *gitHubConfig) (*GitHub, error) {
 		cfg.MaxRetryDelay = 20 * time.Second
 	}
 
-	ghToken := cfg.GuardianGitHubToken
+	ghToken := cfg.TagrepGitHubToken
 	if ghToken == "" {
 		ghToken = cfg.GitHubToken
 	}
