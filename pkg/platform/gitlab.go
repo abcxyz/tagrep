@@ -42,8 +42,6 @@ var (
 	}
 )
 
-// TODO(gjonathanhong): Implement GitLab platform.
-
 // GitLab implements the Platform interface.
 type GitLab struct {
 	cfg    *gitLabConfig
@@ -190,11 +188,7 @@ func (g *GitLab) GetRequestBody(ctx context.Context) (string, error) {
 	if err := g.withRetries(ctx, func(ctx context.Context) error {
 		mr, resp, err := g.client.MergeRequests.GetMergeRequest(g.cfg.GitLabProjectID, g.cfg.GitLabMergeRequestIID, nil)
 		if err != nil {
-			if resp != nil {
-				if _, ok := gitLabIgnoredStatusCodes[resp.StatusCode]; !ok {
-					return retry.RetryableError(err)
-				}
-			}
+			return gitlabMaybeRetryable(resp, fmt.Errorf("failed to get merge request: %w", err))
 		}
 		body = mr.Description
 
@@ -215,11 +209,7 @@ func (g *GitLab) GetIssueBody(ctx context.Context) (string, error) {
 	if err := g.withRetries(ctx, func(ctx context.Context) error {
 		mr, resp, err := g.client.Issues.GetIssue(g.cfg.GitLabProjectID, g.cfg.GitLabIssueIID, nil)
 		if err != nil {
-			if resp != nil {
-				if _, ok := gitLabIgnoredStatusCodes[resp.StatusCode]; !ok {
-					return retry.RetryableError(err)
-				}
-			}
+			return gitlabMaybeRetryable(resp, fmt.Errorf("failed to get issue: %w", err))
 		}
 		body = mr.Description
 
@@ -256,4 +246,13 @@ func (g *GitLab) withRetries(ctx context.Context, retryFunc retry.RetryFunc) err
 		return fmt.Errorf("failed to execute retriable function: %w", err)
 	}
 	return nil
+}
+
+func gitlabMaybeRetryable(resp *gitlab.Response, err error) error {
+	if resp != nil {
+		if _, ok := gitLabIgnoredStatusCodes[resp.StatusCode]; !ok {
+			return retry.RetryableError(err)
+		}
+	}
+	return err
 }
