@@ -33,4 +33,4 @@ jobs:
       - name: 'Check PR tags'
         shell: 'bash'
         run: |
-          ./tagrep -type=request -format=json -duplicate-key-strategy=array
+          ./tagrep parse -type=request -format=json -duplicate-key-strategy=array
