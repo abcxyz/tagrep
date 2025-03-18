@@ -128,7 +128,7 @@ func (p *TagParser) ParseTags(ctx context.Context, v string) (string, error) {
 
 func (p *TagParser) processDuplicateKeys(ctx context.Context, ts []*Tag) (any, error) {
 	last := ts[len(ts)-1]
-	if !sliceContains(p.cfg.ArrayFields, ts[0].Name) {
+	if !sliceContains(p.cfg.ArrayFields, ts[0].Name) && p.cfg.DuplicateKeyStrategy != DuplicateKeyStrategyTakeLast {
 		logging.DefaultLogger().WarnContext(ctx, "encountered duplicate keys that are not in array fields. Defaulting to take-last.",
 			"key", last.Name,
 			"array_fields", p.cfg.ArrayFields)
