@@ -151,9 +151,13 @@ func parseTags(ctx context.Context, v string) map[string][]string {
 }
 
 func stringifyRaw(v any) (string, error) {
-	switch reflect.TypeOf(v).Kind() {
+	switch reflect.TypeOf(v).Kind() { //nolint:exhaustive
 	case reflect.String:
-		return v.(string), nil
+		s, ok := v.(string)
+		if !ok {
+			return "", fmt.Errorf("failed to cast string as string %s", v)
+		}
+		return s, nil
 	case reflect.Slice:
 		// Do not use MarshalIndent here because we want the output to be on a single line for "raw" output format.
 		jsonBytes, err := json.Marshal(v)
