@@ -37,6 +37,6 @@ jobs:
       - name: 'Check PR tags'
         shell: 'bash'
         env:
-          GITHUB_TOKEN: '${{ env.GITHUB_TOKEN }}'
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
           ./tagrep parse -type=request -format=json -duplicate-key-strategy=array
