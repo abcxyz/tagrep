@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package request parses the github pull request or gitlab merge request and exports any tags to env.
+// Package parse parses the github pull request gitlab merge request, or github/gitlab issue and prints any tags to stdout.
 package parse
 
 import (
