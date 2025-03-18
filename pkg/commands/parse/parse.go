@@ -80,8 +80,8 @@ Usage: {{ COMMAND }} [options]
 
 	TAG_1=Some tag value
 	TAG_2=my-tag
-	TAG_3=something
-	TAG_3=something else
+	TAG_3=foo
+	TAG_3=bar
 `
 }
 
