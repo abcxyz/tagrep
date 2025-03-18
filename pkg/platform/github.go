@@ -61,7 +61,6 @@ type gitHubConfig struct {
 	MaxRetryDelay     time.Duration
 
 	// Auth
-	TagrepGitHubToken       string
 	GitHubToken             string
 	GitHubOwner             string
 	GitHubRepo              string
@@ -145,17 +144,6 @@ func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 	d.Load(gitHubContext)
 
 	f := set.NewSection("GITHUB OPTIONS")
-
-	f.StringVar(&cli.StringVar{
-		Name:   "tagrep-github-token",
-		EnvVar: "TAGREP_GITHUB_TOKEN",
-		Target: &c.TagrepGitHubToken,
-		Usage: `The GitHub access token for Tagrep to make GitHub API calls.
-This is separate from GITHUB_TOKEN because Terraform uses GITHUB_TOKEN to authenticate
-to the GitHub APIs also. Splitting this up allows users to follow least privilege
-for the caller (e.g. Tagrep vs Terraform). If not supplied this will default to
-GITHUB_TOKEN.`,
-	})
 
 	f.StringVar(&cli.StringVar{
 		Name:   "github-token",
@@ -311,15 +299,10 @@ func NewGitHub(ctx context.Context, cfg *gitHubConfig) (*GitHub, error) {
 		cfg.MaxRetryDelay = 20 * time.Second
 	}
 
-	ghToken := cfg.TagrepGitHubToken
-	if ghToken == "" {
-		ghToken = cfg.GitHubToken
-	}
-
 	var ts oauth2.TokenSource
-	if ghToken != "" {
+	if cfg.GitHubToken != "" {
 		ts = oauth2.StaticTokenSource(&oauth2.Token{
-			AccessToken: ghToken,
+			AccessToken: cfg.GitHubToken,
 		})
 	} else {
 		signer, err := githubauth.NewPrivateKeySigner(cfg.GitHubAppPrivateKeyPEM)
