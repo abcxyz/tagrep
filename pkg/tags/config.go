@@ -50,7 +50,7 @@ func (c *Config) RegisterFlags(set *cli.FlagSet) {
 		Target:  &c.Format,
 		Example: "json",
 		Default: FormatRaw,
-		Usage:   fmt.Sprintf("Format for the output. Allowed values are %q. Defaults to raw (outputs the deduplicated tags as they were in the PR for easy parsing into bash env variables).", allowedFormats),
+		Usage:   fmt.Sprintf("Format for the output. Allowed values are %q. Defaults to raw (outputs the deduplicated tags as they were in the PR for easy parsing into bash env variables). If -duplicate-key-strategy=array then only those keys in -array-fields will be concatenated into separate JSON arrays.", allowedFormats),
 		Predict: complete.PredictFunc(func(prefix string) []string {
 			return allowedFormats
 		}),
