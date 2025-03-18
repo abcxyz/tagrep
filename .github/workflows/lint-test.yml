@@ -40,3 +40,5 @@ jobs:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
           ./tagrep parse -type=request -format=json -duplicate-key-strategy=array
+          ./tagrep parse -type=request -format=json -duplicate-key-strategy=array -array-fields=TAG_3
+          ./tagrep parse -type=request -format=raw -duplicate-key-strategy=take-last
