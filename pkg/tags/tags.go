@@ -156,9 +156,9 @@ func (p *TagParser) processDuplicateKeys(ctx context.Context, ts []*Tag) (any, e
 }
 
 func values(ts []*Tag) []string {
-	var resp []string
-	for _, t := range ts {
-		resp = append(resp, t.Value)
+	resp := make([]string, len(ts))
+	for i, t := range ts {
+		resp[i] = t.Value
 	}
 	return resp
 }
