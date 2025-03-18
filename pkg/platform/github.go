@@ -354,6 +354,9 @@ func NewGitHub(ctx context.Context, cfg *gitHubConfig) (*GitHub, error) {
 
 // GetRequestBody gets the Pull Request body.
 func (g *GitHub) GetRequestBody(ctx context.Context) (string, error) {
+	if g.cfg.GitHubPullRequestBody != "" {
+		return g.cfg.GitHubPullRequestBody, nil
+	}
 	if err := validateGitHubInputs(g.cfg); err != nil {
 		return "", fmt.Errorf("failed to validate inputs: %w", err)
 	}

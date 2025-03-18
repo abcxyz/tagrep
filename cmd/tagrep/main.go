@@ -28,8 +28,7 @@ import (
 	"github.com/abcxyz/pkg/logging"
 	"github.com/abcxyz/tagrep/internal/metricswrap"
 	"github.com/abcxyz/tagrep/internal/version"
-	"github.com/abcxyz/tagrep/pkg/commands/issue"
-	"github.com/abcxyz/tagrep/pkg/commands/request"
+	"github.com/abcxyz/tagrep/pkg/commands/parse"
 )
 
 const (
@@ -44,11 +43,8 @@ var rootCmd = func() cli.Command {
 		Name:    "tagrep",
 		Version: version.HumanVersion,
 		Commands: map[string]cli.CommandFactory{
-			"issue": func() cli.Command {
-				return &issue.ParseCommand{}
-			},
-			"request": func() cli.Command {
-				return &request.ParseCommand{}
+			"parse": func() cli.Command {
+				return &parse.ParseCommand{}
 			},
 		},
 	}
