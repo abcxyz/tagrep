@@ -17,6 +17,7 @@ package tags
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/posener/complete/v2"
@@ -39,9 +40,9 @@ func (c *Config) RegisterFlags(set *cli.FlagSet) {
 		Target:  &c.DuplicateKeyStrategy,
 		Example: "array",
 		Default: DuplicateKeyStrategyArray,
-		Usage:   fmt.Sprintf("How to handle lines with duplicate tag keys. Allowed values are %q. Defaults to concatenating all tag values into an array.", SortedStrategies),
+		Usage:   fmt.Sprintf("How to handle lines with duplicate tag keys. Allowed values are %q. Defaults to concatenating all tag values into an array.", allowedStrategies),
 		Predict: complete.PredictFunc(func(prefix string) []string {
-			return SortedStrategies
+			return allowedStrategies
 		}),
 	})
 	f.StringVar(&cli.StringVar{
@@ -49,27 +50,28 @@ func (c *Config) RegisterFlags(set *cli.FlagSet) {
 		Target:  &c.Format,
 		Example: "json",
 		Default: FormatRaw,
-		Usage:   fmt.Sprintf("Format for the output. Allowed values are %q. Defaults to raw.", SortedFormats),
+		Usage:   fmt.Sprintf("Format for the output. Allowed values are %q. Defaults to raw (outputs the deduplicated tags as they were in the PR for easy parsing into bash env variables).", allowedFormats),
 		Predict: complete.PredictFunc(func(prefix string) []string {
-			return SortedFormats
+			return allowedFormats
 		}),
 	})
 	f.StringSliceVar(&cli.StringSliceVar{
 		Name:    "array-fields",
 		Target:  &c.ArrayFields,
-		Example: "json",
+		Example: "TAG_1",
 		Default: []string{},
-		Usage:   "Fields to format as an array.",
+		Usage:   "Fields to format as an array. e.g. treat TAG_1 as an array.",
 	})
 
 	set.AfterParse(func(merr error) error {
 		c.DuplicateKeyStrategy = strings.ToLower(strings.TrimSpace(c.DuplicateKeyStrategy))
+		c.Format = strings.ToLower(strings.TrimSpace(c.Format))
 
-		if _, ok := allowedStrategies[c.DuplicateKeyStrategy]; !ok || c.DuplicateKeyStrategy == DuplicateKeyStrategyUnspecified {
+		if !slices.Contains(allowedStrategies, c.DuplicateKeyStrategy) {
 			merr = errors.Join(merr, fmt.Errorf("unsupported value for duplicate key strategy flag: %s", c.DuplicateKeyStrategy))
 		}
 
-		if _, ok := allowedFormats[c.Format]; !ok || c.Format == FormatUnspecified {
+		if !slices.Contains(allowedFormats, c.Format) {
 			merr = errors.Join(merr, fmt.Errorf("unsupported value for format flag: %s", c.Format))
 		}
 

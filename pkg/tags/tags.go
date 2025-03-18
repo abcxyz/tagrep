@@ -20,7 +20,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"regexp"
+	"slices"
 	"sort"
 	"strings"
 
@@ -37,26 +39,17 @@ const (
 	FormatUnspecified = ""
 	FormatJSON        = "json"
 	FormatRaw         = "raw"
+
+	defaultJSONIndent = "  "
 )
 
 var (
-	allowedStrategies = map[string]struct{}{
-		DuplicateKeyStrategyTakeLast: {},
-		DuplicateKeyStrategyArray:    {},
-	}
-	// SortedStrategies are the sorted duplicate key strategies.
-	SortedStrategies = func() []string {
+	allowedStrategies = func() []string {
 		allowed := append([]string{}, DuplicateKeyStrategyTakeLast, DuplicateKeyStrategyArray)
 		sort.Strings(allowed)
 		return allowed
 	}()
-
-	allowedFormats = map[string]struct{}{
-		FormatJSON: {},
-		FormatRaw:  {},
-	}
-	// SortedFormats are the sorted formats.
-	SortedFormats = func() []string {
+	allowedFormats = func() []string {
 		allowed := append([]string{}, FormatJSON, FormatRaw)
 		sort.Strings(allowed)
 		return allowed
@@ -64,14 +57,6 @@ var (
 	// tagPattern is a Regex pattern used to parse the tags from a multiline string.
 	tagPattern = regexp.MustCompile(`([A-Za-z0-9_]*)=([^\n\r]*)`)
 )
-
-// Tag represents the tag name and values from the issue or request.
-type Tag struct {
-	// Name of the tag.
-	Name string
-	// Value of the tag.
-	Value string
-}
 
 type TagParser struct {
 	cfg *Config
@@ -82,6 +67,22 @@ func NewTagParser(ctx context.Context, cfg *Config) TagParser {
 	return TagParser{cfg}
 }
 
+func (p *TagParser) ParseTags(ctx context.Context, v string) (string, error) {
+	tagStrs := make(map[string]any)
+	ts := parseTags(ctx, v)
+	for k, t := range ts {
+		var err error
+		if tagStrs[k], err = p.processTagValues(ctx, k, t); err != nil {
+			return "", fmt.Errorf("failed to process duplicate keys: %w", err)
+		}
+	}
+	r, err := p.format(ctx, tagStrs)
+	if err != nil {
+		return "", fmt.Errorf("failed to format tags: %w", err)
+	}
+	return r, nil
+}
+
 func (p *TagParser) format(ctx context.Context, ts map[string]any) (r string, merr error) {
 	switch p.cfg.Format {
 	case FormatRaw:
@@ -89,13 +90,17 @@ func (p *TagParser) format(ctx context.Context, ts map[string]any) (r string, me
 		keys := maps.Keys(ts)
 		sort.Strings(keys)
 		for _, k := range keys {
-			if _, err := builder.WriteString(fmt.Sprintf("%s=%s\n", k, ts[k])); err != nil {
+			v, err := stringifyRaw(ts[k])
+			if err != nil {
+				merr = errors.Join(merr, fmt.Errorf("failed to parse %s as array: %w", k, err))
+			}
+			if _, err := builder.WriteString(fmt.Sprintf("%s=%s\n", k, v)); err != nil {
 				merr = errors.Join(merr, fmt.Errorf("failed to write tag(%s): %w", k, err))
 			}
 		}
 		return builder.String(), merr
 	case FormatJSON:
-		jsonBytes, err := json.Marshal(ts)
+		jsonBytes, err := json.MarshalIndent(ts, "", defaultJSONIndent)
 		if err != nil {
 			return "", fmt.Errorf("failed to parse as json: %w", err)
 		}
@@ -107,84 +112,56 @@ func (p *TagParser) format(ctx context.Context, ts map[string]any) (r string, me
 	return "", fmt.Errorf("unknown error formatting tags")
 }
 
-func (p *TagParser) ParseTags(ctx context.Context, v string) (string, error) {
-	tagStrs := make(map[string]any)
-	ts := parseTags(ctx, v)
-	for k, t := range ts {
-		tagStrs[k] = t[0].Value
-		if len(t) > 1 || sliceContains(p.cfg.ArrayFields, t[0].Name) {
-			var err error
-			if tagStrs[k], err = p.processDuplicateKeys(ctx, t); err != nil {
-				return "", fmt.Errorf("failed to process duplicate keys: %w", err)
-			}
-		}
-	}
-	r, err := p.format(ctx, tagStrs)
-	if err != nil {
-		return "", fmt.Errorf("failed to format tags: %w", err)
-	}
-	return r, nil
-}
-
-func (p *TagParser) processDuplicateKeys(ctx context.Context, ts []*Tag) (any, error) {
+// processTagValues either returns an array or a string value depending on the duplicate key strategy.
+func (p *TagParser) processTagValues(ctx context.Context, key string, ts []string) (any, error) {
 	last := ts[len(ts)-1]
-	if !sliceContains(p.cfg.ArrayFields, ts[0].Name) && p.cfg.DuplicateKeyStrategy != DuplicateKeyStrategyTakeLast {
-		logging.DefaultLogger().WarnContext(ctx, "encountered duplicate keys that are not in array fields. Defaulting to take-last.",
-			"key", last.Name,
+	if len(ts) == 1 && !slices.Contains(p.cfg.ArrayFields, key) {
+		return last, nil
+	}
+	if !slices.Contains(p.cfg.ArrayFields, key) && p.cfg.DuplicateKeyStrategy != DuplicateKeyStrategyTakeLast {
+		logging.FromContext(ctx).WarnContext(ctx, "encountered duplicate keys that are not in array fields. Defaulting to take-last.",
+			"key", key,
 			"array_fields", p.cfg.ArrayFields)
-		return last.Value, nil
+		return last, nil
 	}
 	switch p.cfg.DuplicateKeyStrategy {
 	case DuplicateKeyStrategyTakeLast:
-		return last.Value, nil
+		return last, nil
 	case DuplicateKeyStrategyArray:
-		if p.cfg.Format == FormatJSON {
-			// If the format is json this will be handled later in the format() func.
-			return values(ts), nil
-		}
-		jsonBytes, err := json.Marshal(values(ts))
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse %s as array: %w", last.Name, err)
-		}
-		return string(jsonBytes), nil
+		return ts, nil
 	case DuplicateKeyStrategyUnspecified:
 	default:
 		return nil, fmt.Errorf("processing duplicate key '%s' with invalid duplicate key strategy '%s'",
-			ts[0].Name, p.cfg.DuplicateKeyStrategy)
+			key, p.cfg.DuplicateKeyStrategy)
 	}
 	return nil, fmt.Errorf("unknown error processing duplicate keys")
 }
 
-func values(ts []*Tag) []string {
-	resp := make([]string, len(ts))
-	for i, t := range ts {
-		resp[i] = t.Value
-	}
-	return resp
-}
-
-func parseTags(ctx context.Context, v string) map[string][]*Tag {
-	resp := make(map[string][]*Tag)
+func parseTags(ctx context.Context, v string) map[string][]string {
+	resp := make(map[string][]string)
 	matches := tagPattern.FindAllStringSubmatch(v, -1)
 	for _, m := range matches {
 		if len(m) < 3 {
-			logging.DefaultLogger().WarnContext(ctx, "unable to parse tag line", "invalid_match", m)
+			logging.FromContext(ctx).WarnContext(ctx, "unable to parse tag line", "invalid_match", m)
 			continue
 		}
-		resp[m[1]] = append(resp[m[1]], &Tag{Name: m[1], Value: m[2]})
+		resp[m[1]] = append(resp[m[1]], m[2])
 	}
 	return resp
 }
 
-func sliceIndex[T comparable](haystack []T, needle T) int {
-	for i, v := range haystack {
-		if v == needle {
-			return i
+func stringifyRaw(v any) (string, error) {
+	switch reflect.TypeOf(v).Kind() {
+	case reflect.String:
+		return v.(string), nil
+	case reflect.Slice:
+		// Do not use MarshalIndent here because we want the output to be on a single line for "raw" output format.
+		jsonBytes, err := json.Marshal(v)
+		if err != nil {
+			return "", fmt.Errorf("failed to parse as array: %w", err)
 		}
+		return string(jsonBytes), nil
+	default:
+		return "", fmt.Errorf("unsupported type for tag strigify %s", v)
 	}
-	return -1
-}
-
-func sliceContains[T comparable](haystack []T, needle T) bool {
-	return sliceIndex(haystack, needle) != -1
 }

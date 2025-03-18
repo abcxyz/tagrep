@@ -76,7 +76,12 @@ func (c *ParseCommand) Help() string {
 	return `
 Usage: {{ COMMAND }} [options]
 
-	Parse tags and output to stdout.
+	Parse tags and output to stdout. Tags should be of the form:
+
+	TAG_1=Some tag value
+	TAG_2=my-tag
+	TAG_3=something
+	TAG_3=something else
 `
 }
 
@@ -145,12 +150,14 @@ func (c *ParseCommand) Process(ctx context.Context) (merr error) {
 	switch c.FlagType {
 	case TypeRequest:
 		if body, err = c.platformClient.GetRequestBody(ctx); err != nil {
-			return errors.Join(merr, fmt.Errorf("failed to get request body: %w", err))
+			return fmt.Errorf("failed to get request body: %w", err)
 		}
 	case TypeIssue:
 		if body, err = c.platformClient.GetIssueBody(ctx); err != nil {
-			return errors.Join(merr, fmt.Errorf("failed to get issue body: %w", err))
+			return fmt.Errorf("failed to get issue body: %w", err)
 		}
+	default:
+		return fmt.Errorf("failed to process tags for unsupported version control object of type %s", c.FlagType)
 	}
 	ts, err := c.tagParser.ParseTags(ctx, body)
 	if err != nil {

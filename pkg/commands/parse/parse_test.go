@@ -227,7 +227,13 @@ TAG_1=my-tag-value3
 					Params: []any{},
 				},
 			},
-			expStdout: "{\"TAG_1\":[\"my-tag-value1\",\"my-tag-value2\",\"my-tag-value3\"]}",
+			expStdout: `{
+  "TAG_1": [
+    "my-tag-value1",
+    "my-tag-value2",
+    "my-tag-value3"
+  ]
+}`,
 		},
 	}
 
