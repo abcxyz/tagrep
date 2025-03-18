@@ -62,7 +62,7 @@ var (
 		return allowed
 	}()
 	// tagPattern is a Regex pattern used to parse the tags from a multiline string.
-	tagPattern = regexp.MustCompile(`([A-Za-z0-9_]*)=(.*)`)
+	tagPattern = regexp.MustCompile(`([A-Za-z0-9_]*)=([^\n\r]*)`)
 )
 
 // Tag represents the tag name and values from the issue or request.
