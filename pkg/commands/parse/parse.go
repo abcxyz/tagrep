@@ -92,7 +92,7 @@ func (c *ParseCommand) Flags() *cli.FlagSet {
 		Name:    "type",
 		Target:  &c.FlagType,
 		Example: "issue",
-		Usage:   fmt.Sprintf("Type of version control platform asset to process. Allowed values are %q. Defaults to array.", sortedTypes),
+		Usage:   fmt.Sprintf("Type of version control platform asset to process. Allowed values are %q.", sortedTypes),
 		Predict: complete.PredictFunc(func(prefix string) []string {
 			return sortedTypes
 		}),
@@ -160,9 +160,7 @@ func (c *ParseCommand) Process(ctx context.Context) (merr error) {
 	logger.DebugContext(ctx, "parsed tags from request body",
 		"tags", ts)
 
-	if _, err := c.Stdout().Write([]byte(ts)); err != nil {
-		merr = errors.Join(merr, fmt.Errorf("failed to write tags: %w", err))
-	}
+	c.Outf(ts)
 
 	return merr
 }

@@ -39,7 +39,7 @@ func (c *Config) RegisterFlags(set *cli.FlagSet) {
 		Target:  &c.DuplicateKeyStrategy,
 		Example: "array",
 		Default: DuplicateKeyStrategyArray,
-		Usage:   fmt.Sprintf("How to handle lines with duplicate tag keys. Allowed values are %q. Defaults to array.", SortedStrategies),
+		Usage:   fmt.Sprintf("How to handle lines with duplicate tag keys. Allowed values are %q. Defaults to concatenating all tag values into an array.", SortedStrategies),
 		Predict: complete.PredictFunc(func(prefix string) []string {
 			return SortedStrategies
 		}),
