@@ -42,7 +42,7 @@ AOD request for access to production service ABC
 JUSTIFICATION=I need access so I can delete the database
 ```
 
-You can use tagrep in a github or gitlab workflow to fetch and parse these tags:
+You can use `tagrep` in a GitHub or GitLab workflow to fetch and parse these tags:
 
 ```
 tagrep parse -type=request -format=json
