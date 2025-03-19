@@ -78,6 +78,7 @@ type gitHubConfig struct {
 	GitHubPullRequestNumber int
 	GitHubPullRequestBody   string
 	GitHubIssueNumber       int
+	GitHubIssueBody         string
 	GitHubSHA               string
 	GitHubActor             string
 }
@@ -88,6 +89,7 @@ type gitHubConfigDefaults struct {
 	PullRequestNumber int
 	PullRequestBody   string
 	IssueNumber       int
+	IssueBody         string
 }
 
 // Load retrieves the predefined GitHub CI/CD variables from environment.
@@ -134,6 +136,15 @@ func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) 
 			// Pull request body is not available on the merge_group event.
 		} else {
 			logging.DefaultLogger().Warn("parsing merge_group event context failed", "error", err) //nolint:sloglint
+		}
+	}
+	if githubContext.EventName == "issues" {
+		var event github.IssuesEvent
+		if err := json.Unmarshal(data, &event); err == nil {
+			c.IssueNumber = event.GetIssue().GetNumber()
+			c.IssueBody = event.GetIssue().GetBody()
+		} else {
+			logging.DefaultLogger().Warn("parsing issues event context failed", "error", err) //nolint:sloglint
 		}
 	}
 }
@@ -271,6 +282,15 @@ func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 	})
 
 	f.StringVar(&cli.StringVar{
+		Name:    "github-issue-body",
+		EnvVar:  "GITHUB_ISSUE_BODY",
+		Target:  &c.GitHubIssueBody,
+		Default: d.IssueBody,
+		Usage:   "The GitHub issue body.",
+		Hidden:  true,
+	})
+
+	f.StringVar(&cli.StringVar{
 		Name:   "github-commit-sha",
 		EnvVar: "GITHUB_SHA",
 		Target: &c.GitHubSHA,
@@ -363,13 +383,16 @@ func (g *GitHub) GetRequestBody(ctx context.Context) (string, error) {
 
 // GetIssueBody gets the Issue body.
 func (g *GitHub) GetIssueBody(ctx context.Context) (string, error) {
+	if g.cfg.GitHubIssueBody != "" {
+		return g.cfg.GitHubIssueBody, nil
+	}
 	if err := validateGitHubInputs(g.cfg); err != nil {
 		return "", fmt.Errorf("failed to validate inputs: %w", err)
 	}
 	var body string
 
 	if err := g.withRetries(ctx, func(ctx context.Context) error {
-		ghIssue, resp, err := g.client.Issues.Get(ctx, g.cfg.GitHubOwner, g.cfg.GitHubRepo, g.cfg.GitHubPullRequestNumber)
+		ghIssue, resp, err := g.client.Issues.Get(ctx, g.cfg.GitHubOwner, g.cfg.GitHubRepo, g.cfg.GitHubIssueNumber)
 		if err != nil {
 			return githubMaybeRetryable(resp, fmt.Errorf("failed to get pull request: %w", err))
 		}
