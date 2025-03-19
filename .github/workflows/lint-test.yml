@@ -50,6 +50,12 @@ jobs:
             -format=json \
             -duplicate-key-strategy=array \
             -array-fields=SOME_ARRAY_TAG_ON_A_PR \
+            -github-pull-request-number=9
+          go run ./cmd/tagrep parse \
+            -type=request \
+            -format=json \
+            -duplicate-key-strategy=array \
+            -array-fields=SOME_ARRAY_TAG_ON_A_PR \
             -github-pull-request-number=12
           go run ./cmd/tagrep parse \
             -type=issue \
