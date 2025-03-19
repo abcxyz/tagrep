@@ -17,6 +17,7 @@ concurrency:
 permissions:
   contents: 'read'
   pull-requests: 'read'
+  issues: 'read'
 
 jobs:
   go_lint:
@@ -42,3 +43,4 @@ jobs:
           ./tagrep parse -type=request -format=json -duplicate-key-strategy=array
           ./tagrep parse -type=request -format=json -duplicate-key-strategy=array -array-fields=TAG_3
           ./tagrep parse -type=request -format=raw -duplicate-key-strategy=take-last
+          ./tagrep parse -type=issue -format=raw -duplicate-key-strategy=take-last -github-issue-number=11
