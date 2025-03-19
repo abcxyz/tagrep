@@ -51,7 +51,7 @@ jobs:
             "SOME_ARRAY_TAG_ON_A_PR": [
               "test1",
               "test2",
-              "test4"
+              "test3"
             ],
             "SOME_OTHER_TAG_ON_A_PR": "my tag explaining something",
             "SOME_TAG_ON_A_PR": "1234"
@@ -76,7 +76,7 @@ jobs:
             "DO_NOT_MODIFY": "used for testing on every PR!!!",
             "MY_ARRAY": [
               "1",
-              "6"
+              "5"
             ],
             "SOME_OTHER_TAG": "some other value",
             "SOME_TAG": "some tag value"
