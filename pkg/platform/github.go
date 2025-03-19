@@ -81,6 +81,8 @@ type gitHubConfig struct {
 	GitHubIssueBody         string
 	GitHubSHA               string
 	GitHubActor             string
+
+	configDefaults *gitHubConfigDefaults
 }
 
 type gitHubConfigDefaults struct {
@@ -152,8 +154,8 @@ func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) 
 
 func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 	gitHubContext, _ := githubactions.New().Context()
-	d := &gitHubConfigDefaults{}
-	d.Load(gitHubContext)
+	c.configDefaults = &gitHubConfigDefaults{}
+	c.configDefaults.Load(gitHubContext)
 
 	f := set.NewSection("GITHUB OPTIONS")
 
@@ -168,7 +170,7 @@ func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 	f.StringVar(&cli.StringVar{
 		Name:    "github-owner",
 		Target:  &c.GitHubOwner,
-		Default: d.Owner,
+		Default: c.configDefaults.Owner,
 		Example: "organization-name",
 		Usage:   "The GitHub repository owner.",
 		Hidden:  true,
@@ -177,7 +179,7 @@ func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 	f.StringVar(&cli.StringVar{
 		Name:    "github-repo",
 		Target:  &c.GitHubRepo,
-		Default: d.Repo,
+		Default: c.configDefaults.Repo,
 		Example: "repository-name",
 		Usage:   "The GitHub repository name.",
 		Hidden:  true,
@@ -259,7 +261,7 @@ func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 		Name:    "github-pull-request-number",
 		EnvVar:  "GITHUB_PULL_REQUEST_NUMBER",
 		Target:  &c.GitHubPullRequestNumber,
-		Default: d.PullRequestNumber,
+		Default: c.configDefaults.PullRequestNumber,
 		Usage:   "The GitHub pull request number.",
 	})
 
@@ -267,7 +269,7 @@ func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 		Name:    "github-pull-request-body",
 		EnvVar:  "GITHUB_PULL_REQUEST_BODY",
 		Target:  &c.GitHubPullRequestBody,
-		Default: d.PullRequestBody,
+		Default: c.configDefaults.PullRequestBody,
 		Usage:   "The GitHub pull request body.",
 		Hidden:  true,
 	})
@@ -276,7 +278,7 @@ func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 		Name:    "github-issue-number",
 		EnvVar:  "GITHUB_ISSUE_NUMBER",
 		Target:  &c.GitHubIssueNumber,
-		Default: d.IssueNumber,
+		Default: c.configDefaults.IssueNumber,
 		Usage:   "The GitHub issue number.",
 	})
 
@@ -284,7 +286,7 @@ func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 		Name:    "github-issue-body",
 		EnvVar:  "GITHUB_ISSUE_BODY",
 		Target:  &c.GitHubIssueBody,
-		Default: d.IssueBody,
+		Default: c.configDefaults.IssueBody,
 		Usage:   "The GitHub issue body.",
 		Hidden:  true,
 	})
@@ -303,6 +305,26 @@ func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 		Target: &c.GitHubActor,
 		Usage:  "The GitHub Login of the user requesting the workflow.",
 		Hidden: true,
+	})
+
+	set.AfterParse(func(merr error) error {
+		// The PullRequestNumber and PullRequestBody must derive from the same
+		// PR - we reset the body value from the default extracted from the
+		// github context if the user provided a custom PR number.
+		userProvidedPRNumberOverride := c.configDefaults.PullRequestNumber > 0 && c.configDefaults.PullRequestNumber != c.GitHubPullRequestNumber
+		if userProvidedPRNumberOverride && c.configDefaults.PullRequestBody == c.GitHubPullRequestBody {
+			c.GitHubPullRequestBody = ""
+		}
+
+		// The IssueNumber and IssueBody must derive from the same issue - we
+		// reset the body value from the default extracted from the github
+		// context if the user provided a custom PR number.
+		userProvidedIssueNumberOverride := c.configDefaults.IssueNumber > 0 && c.configDefaults.IssueNumber != c.GitHubIssueNumber
+		if userProvidedIssueNumberOverride && c.configDefaults.IssueBody == c.GitHubIssueBody {
+			c.GitHubIssueBody = ""
+		}
+
+		return nil
 	})
 }
 
