@@ -35,12 +35,15 @@ jobs:
       - name: 'Checkout'
         uses: 'actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b' # ratchet:actions/checkout@v4
 
+      - name: 'Setup Go'
+        uses: 'actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7' # ratchet:actions/setup-go@v5
+        with:
+          go-version-file: 'go.mod'
+
       - name: 'Check PR tags'
         shell: 'bash'
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
-          ./tagrep parse -type=request -format=json -duplicate-key-strategy=array
-          ./tagrep parse -type=request -format=json -duplicate-key-strategy=array -array-fields=TAG_3
-          ./tagrep parse -type=request -format=raw -duplicate-key-strategy=take-last
-          ./tagrep parse -type=issue -format=raw -duplicate-key-strategy=take-last -github-issue-number=11
+          go run ./cmd/tagrep parse -type=request -format=json -duplicate-key-strategy=array -github-pull-request-number=12
+          go run ./cmd/tagrep parse -type=issue -format=json -duplicate-key-strategy=take-last -github-issue-number=11
