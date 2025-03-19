@@ -147,6 +147,7 @@ func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) 
 			logging.DefaultLogger().Warn("parsing issues event context failed", "error", err) //nolint:sloglint
 		}
 	}
+	fmt.Println("gitHubConfigDefaults::Load", "PR#", c.PullRequestNumber)
 }
 
 func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
@@ -260,7 +261,6 @@ func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 		Target:  &c.GitHubPullRequestNumber,
 		Default: d.PullRequestNumber,
 		Usage:   "The GitHub pull request number.",
-		Hidden:  true,
 	})
 
 	f.StringVar(&cli.StringVar{
@@ -278,7 +278,6 @@ func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 		Target:  &c.GitHubIssueNumber,
 		Default: d.IssueNumber,
 		Usage:   "The GitHub issue number.",
-		Hidden:  true,
 	})
 
 	f.StringVar(&cli.StringVar{
@@ -364,6 +363,8 @@ func (g *GitHub) GetRequestBody(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("failed to validate inputs: %w", err)
 	}
 	var body string
+
+	fmt.Println("GetRequestBody", "PR#", g.cfg.GitHubPullRequestNumber)
 
 	if err := g.withRetries(ctx, func(ctx context.Context) error {
 		ghPullRequest, resp, err := g.client.PullRequests.Get(ctx, g.cfg.GitHubOwner, g.cfg.GitHubRepo, g.cfg.GitHubPullRequestNumber)
