@@ -308,16 +308,16 @@ func (c *gitHubConfig) RegisterFlags(set *cli.FlagSet) {
 
 	set.AfterParse(func(merr error) error {
 		// The PullRequestNumber and PullRequestBody must derive from the same
-		// PR - we reset the body value from the default extracted from the
-		// github context if the user provided a custom PR number.
+		// PR - we reset the body value from the default github context if the
+		// user provided a custom PR number.
 		userProvidedPRNumberOverride := c.configDefaults.PullRequestNumber > 0 && c.configDefaults.PullRequestNumber != c.GitHubPullRequestNumber
 		if userProvidedPRNumberOverride && c.configDefaults.PullRequestBody == c.GitHubPullRequestBody {
 			c.GitHubPullRequestBody = ""
 		}
 
 		// The IssueNumber and IssueBody must derive from the same issue - we
-		// reset the body value from the default extracted from the github
-		// context if the user provided a custom PR number.
+		// reset the body value from the default github context if the user
+		// provided a custom PR number.
 		userProvidedIssueNumberOverride := c.configDefaults.IssueNumber > 0 && c.configDefaults.IssueNumber != c.GitHubIssueNumber
 		if userProvidedIssueNumberOverride && c.configDefaults.IssueBody == c.GitHubIssueBody {
 			c.GitHubIssueBody = ""
