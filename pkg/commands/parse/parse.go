@@ -12,39 +12,62 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Package request parses the github pull request or gitlab merge request and exports any tags to env.
-package request
+// Package parse parses the github pull request gitlab merge request, or github/gitlab issue and prints any tags to stdout.
+package parse
 
 import (
 	"context"
 	"errors"
 	"flag"
 	"fmt"
+	"sort"
+	"strings"
+
+	"github.com/posener/complete/v2"
 
 	"github.com/abcxyz/pkg/cli"
 	"github.com/abcxyz/pkg/logging"
 	"github.com/abcxyz/tagrep/internal/metricswrap"
-	"github.com/abcxyz/tagrep/pkg/flags"
 	"github.com/abcxyz/tagrep/pkg/platform"
 	"github.com/abcxyz/tagrep/pkg/tags"
 )
 
 var _ cli.Command = (*ParseCommand)(nil)
 
+const (
+	TypeUnspecified = ""
+	TypeIssue       = "issue"
+	TypeRequest     = "request"
+)
+
+var (
+	allowedTypes = map[string]struct{}{
+		TypeIssue:   {},
+		TypeRequest: {},
+	}
+	sortedTypes = func() []string {
+		allowed := append([]string{}, TypeIssue, TypeRequest)
+		sort.Strings(allowed)
+		return allowed
+	}()
+)
+
 // ParseCommand fetches and parses a request and prints out all tags.
 type ParseCommand struct {
 	cli.BaseCommand
 
 	platformConfig platform.Config
-
-	flags.CommonFlags
+	tagsConfig     tags.Config
 
 	platformClient platform.Platform
+	tagParser      tags.TagParser
+
+	FlagType string
 }
 
 // Desc provides a short, one-line description of the command.
 func (c *ParseCommand) Desc() string {
-	return "Export request tags to env."
+	return "Parse tags and output to stdout"
 }
 
 // Help is the long-form help output to include usage instructions and flag
@@ -53,7 +76,12 @@ func (c *ParseCommand) Help() string {
 	return `
 Usage: {{ COMMAND }} [options]
 
-	Export request tags to env.
+	Parse tags and output to stdout. Tags should be of the form:
+
+	TAG_1=Some tag value
+	TAG_2=my-tag
+	TAG_3=foo
+	TAG_3=bar
 `
 }
 
@@ -61,7 +89,29 @@ func (c *ParseCommand) Flags() *cli.FlagSet {
 	set := c.NewFlagSet()
 
 	c.platformConfig.RegisterFlags(set)
-	c.CommonFlags.Register(set)
+	c.tagsConfig.RegisterFlags(set)
+
+	f := set.NewSection("TAGREP OPTIONS")
+
+	f.StringVar(&cli.StringVar{
+		Name:    "type",
+		Target:  &c.FlagType,
+		Example: "issue",
+		Usage:   fmt.Sprintf("Type of version control platform asset to process. Allowed values are %q.", sortedTypes),
+		Predict: complete.PredictFunc(func(prefix string) []string {
+			return sortedTypes
+		}),
+	})
+
+	set.AfterParse(func(merr error) error {
+		c.FlagType = strings.ToLower(strings.TrimSpace(c.FlagType))
+
+		if _, ok := allowedTypes[c.FlagType]; !ok || c.FlagType == TypeUnspecified {
+			merr = errors.Join(merr, fmt.Errorf("unsupported value for type flag: %s", c.FlagType))
+		}
+
+		return merr
+	})
 
 	return set
 }
@@ -84,6 +134,7 @@ func (c *ParseCommand) Run(ctx context.Context, args []string) error {
 		return fmt.Errorf("failed to create platform: %w", err)
 	}
 	c.platformClient = platform
+	c.tagParser = tags.NewTagParser(ctx, &c.tagsConfig)
 
 	return c.Process(ctx)
 }
@@ -94,20 +145,29 @@ func (c *ParseCommand) Process(ctx context.Context) (merr error) {
 	logger.DebugContext(ctx, "starting tagrep request",
 		"platform", c.platformConfig.Type)
 
-	body, err := c.platformClient.GetRequestBody(ctx)
-	if err != nil {
-		merr = errors.Join(merr, fmt.Errorf("failed to get request body: %w", err))
+	var err error
+	var body string
+	switch c.FlagType {
+	case TypeRequest:
+		if body, err = c.platformClient.GetRequestBody(ctx); err != nil {
+			return fmt.Errorf("failed to get request body: %w", err)
+		}
+	case TypeIssue:
+		if body, err = c.platformClient.GetIssueBody(ctx); err != nil {
+			return fmt.Errorf("failed to get issue body: %w", err)
+		}
+	default:
+		return fmt.Errorf("failed to process tags for unsupported version control object of type %s", c.FlagType)
 	}
-	ts := tags.ParseTags(body)
+	ts, err := c.tagParser.ParseTags(ctx, body)
+	if err != nil {
+		return errors.Join(merr, fmt.Errorf("failed to parse tags: %w", err))
+	}
 
 	logger.DebugContext(ctx, "parsed tags from request body",
 		"tags", ts)
 
-	for _, t := range ts {
-		if _, err := c.Stdout().Write([]byte(fmt.Sprintf("%s=%s", t.Name, t.Value))); err != nil {
-			merr = errors.Join(merr, fmt.Errorf("failed to write tag(%s): %w", t.Name, err))
-		}
-	}
+	c.Outf(ts)
 
 	return merr
 }

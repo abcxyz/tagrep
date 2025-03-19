@@ -11,6 +11,7 @@ require (
 	github.com/sethvargo/go-githubactions v1.3.0
 	github.com/sethvargo/go-retry v0.3.0
 	gitlab.com/gitlab-org/api/client-go v0.125.0
+	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
 	golang.org/x/oauth2 v0.26.0
 )
 
