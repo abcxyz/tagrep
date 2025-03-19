@@ -40,26 +40,51 @@ jobs:
         with:
           go-version-file: 'go.mod'
 
-      - name: 'Check PR tags'
+      - name: 'request-test'
         shell: 'bash'
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
-          go run ./cmd/tagrep parse \
+          WANT=$(cat <<'EOF'
+          {
+            "DO_NOT_MODIFY": "used for testing on every PR!!!",
+            "SOME_ARRAY_TAG_ON_A_PR": [
+              "test1",
+              "test2",
+              "test3"
+            ],
+            "SOME_OTHER_TAG_ON_A_PR": "my tag explaining something",
+            "SOME_TAG_ON_A_PR": "1234"
+          }
+          )
+          GOT=$(go run ./cmd/tagrep parse \
             -type=request \
             -format=json \
             -duplicate-key-strategy=array \
             -array-fields=SOME_ARRAY_TAG_ON_A_PR \
-            -github-pull-request-number=9
-          go run ./cmd/tagrep parse \
-            -type=request \
-            -format=json \
-            -duplicate-key-strategy=array \
-            -array-fields=SOME_ARRAY_TAG_ON_A_PR \
-            -github-pull-request-number=12
-          go run ./cmd/tagrep parse \
+            -github-pull-request-number=12)"
+          diff <(echo "$GOT") <(echo "$WANT")
+
+      - name: 'issue-test'
+        shell: 'bash'
+        env:
+          GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
+        run: |
+          WANT=$(cat <<'EOF'
+          {
+            "DO_NOT_MODIFY": "used for testing on every PR!!!",
+            "MY_ARRAY": [
+              "1",
+              "5"
+            ],
+            "SOME_OTHER_TAG": "some other value",
+            "SOME_TAG": "some tag value"
+          }
+          )
+          GOT="$(go run ./cmd/tagrep parse \
             -type=issue \
             -format=json \
             -duplicate-key-strategy=array \
             -array-fields=MY_ARRAY \
-            -github-issue-number=11
+            -github-issue-number=11)"
+          diff <(echo "$GOT") <(echo "$WANT")
