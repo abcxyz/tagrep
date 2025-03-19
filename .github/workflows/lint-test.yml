@@ -45,7 +45,7 @@ jobs:
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
-          WANT=$(cat <<EOF
+          WANT="$(cat <<EOF
           {
             "DO_NOT_MODIFY": "used for testing on every PR!!!",
             "SOME_ARRAY_TAG_ON_A_PR": [
@@ -57,8 +57,8 @@ jobs:
             "SOME_TAG_ON_A_PR": "1234"
           }
           EOF
-          )
-          GOT=$(go run ./cmd/tagrep parse \
+          )"
+          GOT="$(go run ./cmd/tagrep parse \
             -type=request \
             -format=json \
             -duplicate-key-strategy=array \
@@ -71,7 +71,7 @@ jobs:
         env:
           GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
         run: |
-          WANT=$(cat <<EOF
+          WANT="$(cat <<EOF
           {
             "DO_NOT_MODIFY": "used for testing on every PR!!!",
             "MY_ARRAY": [
@@ -82,7 +82,7 @@ jobs:
             "SOME_TAG": "some tag value"
           }
           EOF
-          )
+          )"
           GOT="$(go run ./cmd/tagrep parse \
             -type=issue \
             -format=json \
