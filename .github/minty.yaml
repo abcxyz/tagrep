@@ -4,7 +4,7 @@ rule:
   if: |-
     assertion.iss == issuers.github &&
     assertion.repository_owner_id == '93787867' &&
-    assertion.repository_id == '599811719' &&
+    assertion.repository_id == '948688440' &&
     assertion.workflow_ref == assertion.job_workflow_ref
 
 scope:
