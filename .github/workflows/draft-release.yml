@@ -81,12 +81,18 @@ jobs:
         with:
           github-token: '${{ steps.mint-token.outputs.token }}'
           script: |-
+            let previousTagInfo = {};
+            if (process.env.CURRENT_VERSION !== "0.0.0") {
+              previousTagInfo = {
+                previous_tag_name: `v${process.env.CURRENT_VERSION}`,
+              };
+            }
             const releaseNotesResponse = await github.rest.repos.generateReleaseNotes({
               owner: context.repo.owner,
               repo: context.repo.repo,
               target_commitish: context.sha,
               tag_name: context.sha,
-              previous_tag_name: `v${process.env.CURRENT_VERSION}`,
+              ...previousTagInfo,
             });
             core.setOutput('release-notes', releaseNotesResponse.data.body)
 
