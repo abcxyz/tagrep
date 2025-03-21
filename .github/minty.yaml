@@ -1,0 +1,41 @@
+version: 'minty.abcxyz.dev/v2'
+
+rule:
+  if: |-
+    assertion.iss == issuers.github &&
+    assertion.repository_owner_id == '93787867' &&
+    assertion.repository_id == '948688440' &&
+    assertion.workflow_ref == assertion.job_workflow_ref
+
+scope:
+  draft-release:
+    rule:
+      if: |-
+        assertion.workflow_ref.startsWith('abcxyz/tagrep/.github/workflows/draft-release.yml') &&
+        assertion.ref in [
+          "refs/heads/main",
+          "refs/heads/release/v1",
+          "refs/heads/release/v2",
+        ] &&
+        assertion.event_name == 'workflow_dispatch'
+    repositories:
+      - 'tagrep'
+    permissions:
+      contents: 'write'
+      pull_requests: 'write'
+
+  release:
+    rule:
+      if: |-
+        assertion.workflow_ref.startsWith('abcxyz/tagrep/.github/workflows/release.yml') &&
+        assertion.ref in [
+          "refs/heads/main",
+          "refs/heads/release/v1",
+          "refs/heads/release/v2",
+        ] &&
+        assertion.event_name == 'push'
+    repositories:
+      - 'tagrep'
+    permissions:
+      contents: 'write'
+      workflows: 'write'
