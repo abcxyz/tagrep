@@ -101,9 +101,18 @@ func (p *TagParser) format(ctx context.Context, ts map[string]any) (r string, me
 		}
 		return builder.String(), merr
 	case FormatJSON:
-		jsonBytes, err := json.MarshalIndent(ts, "", defaultJSONIndent)
-		if err != nil {
-			return "", fmt.Errorf("failed to parse as json: %w", err)
+		var jsonBytes []byte
+		var err error
+		if p.cfg.PrettyPrint {
+			jsonBytes, err = json.MarshalIndent(ts, "", defaultJSONIndent)
+			if err != nil {
+				return "", fmt.Errorf("failed to parse as json: %w", err)
+			}
+		} else {
+			jsonBytes, err = json.Marshal(ts)
+			if err != nil {
+				return "", fmt.Errorf("failed to parse as array: %w", err)
+			}
 		}
 		return string(jsonBytes), nil
 	case FormatUnspecified:
@@ -130,19 +139,7 @@ func (p *TagParser) processTagValues(ctx context.Context, key string, ts []strin
 		return last, nil
 	case DuplicateKeyStrategyArray:
 		// JSON marshalling is handled in the format method.
-		if p.cfg.Format == FormatJSON {
-			return ts, nil
-		}
-		// We use json marshalling to return a comma delimited array.
-		jsonBytes, err := json.Marshal(ts)
-		if err != nil {
-			return "", fmt.Errorf("failed to parse as json: %w", err)
-		}
-		v := string(jsonBytes)
-		if len(v) < 2 {
-			return nil, fmt.Errorf("invalid json array %s", v)
-		}
-		return v[1 : len(v)-1], nil
+		return ts, nil
 	case DuplicateKeyStrategyUnspecified:
 	default:
 		return nil, fmt.Errorf("processing duplicate key '%s' with invalid duplicate key strategy '%s'",
@@ -178,7 +175,11 @@ func stringifyRaw(v any) (string, error) {
 		if err != nil {
 			return "", fmt.Errorf("failed to parse as array: %w", err)
 		}
-		return string(jsonBytes), nil
+		v := string(jsonBytes)
+		if len(v) < 2 {
+			return "", fmt.Errorf("invalid json array %s", v)
+		}
+		return v[1 : len(v)-1], nil
 	default:
 		return "", fmt.Errorf("unsupported type for tag strigify %s", v)
 	}

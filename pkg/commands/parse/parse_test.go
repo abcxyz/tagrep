@@ -245,6 +245,7 @@ TAG_1=my-tag-value
 			tagParser: tags.NewTagParser(ctx, &tags.Config{
 				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
 				Format:               tags.FormatJSON,
+				PrettyPrint:          true,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -271,6 +272,7 @@ TAG_1=my-tag-value
 				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
 				ArrayFields:          []string{"TAG_1"},
 				Format:               tags.FormatJSON,
+				PrettyPrint:          true,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -301,6 +303,7 @@ TAG_1=my-tag-value3
 				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
 				ArrayFields:          []string{"TAG_1"},
 				Format:               tags.FormatJSON,
+				PrettyPrint:          true,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -315,6 +318,33 @@ TAG_1=my-tag-value3
     "my-tag-value3"
   ]
 }`,
+		},
+		{
+			name:      "multiple_array_values_in_array_field_json_one_line",
+			parseType: TypeRequest,
+			mockPlatform: &platform.MockPlatform{
+				GetRequestBodyResponse: `A description of a PR.
+
+Some details about a PR.
+
+TAG_1=my-tag-value1
+TAG_1=my-tag-value2
+TAG_1=my-tag-value3
+`,
+			},
+			tagParser: tags.NewTagParser(ctx, &tags.Config{
+				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
+				ArrayFields:          []string{"TAG_1"},
+				Format:               tags.FormatJSON,
+				PrettyPrint:          false,
+			}),
+			expPlatformClientReqs: []*platform.Request{
+				{
+					Name:   "GetRequestBody",
+					Params: []any{},
+				},
+			},
+			expStdout: `{"TAG_1":["my-tag-value1","my-tag-value2","my-tag-value3"]}`,
 		},
 	}
 
