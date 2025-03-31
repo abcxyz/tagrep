@@ -87,6 +87,7 @@ jobs:
           GOT="$(go run ./cmd/tagrep parse \
             -type=issue \
             -format=json \
+            -pretty \
             -duplicate-key-strategy=array \
             -array-fields=MY_ARRAY \
             -github-issue-number=11)"
