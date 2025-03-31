@@ -106,12 +106,12 @@ func (p *TagParser) format(ctx context.Context, ts map[string]any) (r string, me
 		if p.cfg.PrettyPrint {
 			jsonBytes, err = json.MarshalIndent(ts, "", defaultJSONIndent)
 			if err != nil {
-				return "", fmt.Errorf("failed to parse as json: %w", err)
+				return "", fmt.Errorf("failed to parse as json with indent: %w", err)
 			}
 		} else {
 			jsonBytes, err = json.Marshal(ts)
 			if err != nil {
-				return "", fmt.Errorf("failed to parse as array: %w", err)
+				return "", fmt.Errorf("failed to parse as json: %w", err)
 			}
 		}
 		return string(jsonBytes), nil

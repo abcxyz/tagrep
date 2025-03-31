@@ -62,6 +62,7 @@ jobs:
             -type=request \
             -format=json \
             -duplicate-key-strategy=array \
+            -pretty \
             -array-fields=SOME_ARRAY_TAG_ON_A_PR \
             -github-pull-request-number=12)"
           diff <(echo "$GOT") <(echo "$WANT")
