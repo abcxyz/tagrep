@@ -64,6 +64,9 @@ type TagParser struct {
 
 // NewTagParser creates a new tag parser.
 func NewTagParser(ctx context.Context, cfg *Config) TagParser {
+	if cfg.Format == FormatJSON && cfg.DuplicateKeyStrategy != DuplicateKeyStrategyArray {
+
+	}
 	return TagParser{cfg}
 }
 
@@ -72,7 +75,8 @@ func (p *TagParser) ParseTags(ctx context.Context, v string) (string, error) {
 	ts := parseTags(ctx, v)
 	for k, t := range ts {
 		var err error
-		if tagStrs[k], err = p.processTagValues(ctx, k, t); err != nil {
+		key := strings.ToUpper(k)
+		if tagStrs[key], err = p.processTagValues(ctx, key, t); err != nil {
 			return "", fmt.Errorf("failed to process duplicate keys: %w", err)
 		}
 	}
@@ -128,7 +132,20 @@ func (p *TagParser) processTagValues(ctx context.Context, key string, ts []strin
 	case DuplicateKeyStrategyTakeLast:
 		return last, nil
 	case DuplicateKeyStrategyArray:
-		return ts, nil
+		// JSON marshalling is handled in the format method.
+		if p.cfg.Format == FormatJSON {
+			return ts, nil
+		}
+		// We use json marshalling to return a comma delimited array.
+		jsonBytes, err := json.Marshal(ts)
+		if err != nil {
+			return "", fmt.Errorf("failed to parse as json: %w", err)
+		}
+		v := string(jsonBytes)
+		if len(v) < 2 {
+			return nil, fmt.Errorf("invalid json array %s", v)
+		}
+		return v[1 : len(v)-1], nil
 	case DuplicateKeyStrategyUnspecified:
 	default:
 		return nil, fmt.Errorf("processing duplicate key '%s' with invalid duplicate key strategy '%s'",
