@@ -64,9 +64,6 @@ type TagParser struct {
 
 // NewTagParser creates a new tag parser.
 func NewTagParser(ctx context.Context, cfg *Config) TagParser {
-	if cfg.Format == FormatJSON && cfg.DuplicateKeyStrategy != DuplicateKeyStrategyArray {
-
-	}
 	return TagParser{cfg}
 }
 
