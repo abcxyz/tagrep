@@ -30,6 +30,7 @@ type Config struct {
 	DuplicateKeyStrategy string
 	Format               string
 	ArrayFields          []string
+	PrettyPrint          bool
 }
 
 func (c *Config) RegisterFlags(set *cli.FlagSet) {
@@ -61,6 +62,13 @@ func (c *Config) RegisterFlags(set *cli.FlagSet) {
 		Example: "TAG_1",
 		Default: []string{},
 		Usage:   "Fields to format as an array. e.g. treat TAG_1 as an array.",
+	})
+	f.BoolVar(&cli.BoolVar{
+		Name:    "pretty",
+		Target:  &c.PrettyPrint,
+		Example: "true",
+		Default: false,
+		Usage:   "Whether to pretty print results for json on multiple lines.",
 	})
 
 	set.AfterParse(func(merr error) error {

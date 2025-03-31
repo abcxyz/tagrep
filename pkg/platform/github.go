@@ -391,7 +391,9 @@ func (g *GitHub) GetRequestBody(ctx context.Context) (string, error) {
 			return githubMaybeRetryable(resp, fmt.Errorf("failed to get pull request: %w", err))
 		}
 
-		body = *ghPullRequest.Body
+		if ghPullRequest != nil && ghPullRequest.Body != nil {
+			body = *ghPullRequest.Body
+		}
 
 		return nil
 	}); err != nil {

@@ -85,14 +85,16 @@ TAG_2=123143
 TAG_3=A message about the tag. Something.`,
 		},
 		{
-			name:      "ignores_tag_inline",
+			name:      "all_output_upper_case",
 			parseType: TypeRequest,
 			mockPlatform: &platform.MockPlatform{
 				GetRequestBodyResponse: `A description of a PR.
 
-Some details about a PR. TAG_1=my-tag-value
+Some details about a PR.
 
-TAG_2=123143
+tag_1=my-tag-value
+tag_2=123143
+tag_3=A message about the tag. Something.
 `,
 			},
 			tagParser: tags.NewTagParser(ctx, &tags.Config{
@@ -105,7 +107,10 @@ TAG_2=123143
 					Params: []any{},
 				},
 			},
-			expStdout: "TAG_2=123143",
+			expStdout: `
+TAG_1=my-tag-value
+TAG_2=123143
+TAG_3=A message about the tag. Something.`,
 		},
 		{
 			name:      "ignores_tag_inline",
@@ -131,7 +136,30 @@ TAG_2=123143
 			expStdout: "TAG_2=123143",
 		},
 		{
-			name:      "duplicate_key_array_one_value_not_in_array_fields",
+			name:      "ignores_tag_inline",
+			parseType: TypeRequest,
+			mockPlatform: &platform.MockPlatform{
+				GetRequestBodyResponse: `A description of a PR.
+
+Some details about a PR. TAG_1=my-tag-value
+
+TAG_2=123143
+`,
+			},
+			tagParser: tags.NewTagParser(ctx, &tags.Config{
+				DuplicateKeyStrategy: tags.DuplicateKeyStrategyTakeLast,
+				Format:               tags.FormatRaw,
+			}),
+			expPlatformClientReqs: []*platform.Request{
+				{
+					Name:   "GetRequestBody",
+					Params: []any{},
+				},
+			},
+			expStdout: "TAG_2=123143",
+		},
+		{
+			name:      "duplicate_key_array_one_value_not_in_array_fields_raw",
 			parseType: TypeRequest,
 			mockPlatform: &platform.MockPlatform{
 				GetRequestBodyResponse: `A description of a PR.
@@ -154,7 +182,7 @@ TAG_1=my-tag-value
 			expStdout: "TAG_1=my-tag-value",
 		},
 		{
-			name:      "duplicate_key_array_one_value_in_array_fields",
+			name:      "duplicate_key_array_one_value_in_array_fields_raw",
 			parseType: TypeRequest,
 			mockPlatform: &platform.MockPlatform{
 				GetRequestBodyResponse: `A description of a PR.
@@ -175,10 +203,10 @@ TAG_1=my-tag-value
 					Params: []any{},
 				},
 			},
-			expStdout: "TAG_1=[\"my-tag-value\"]",
+			expStdout: "TAG_1=\"my-tag-value\"",
 		},
 		{
-			name:      "duplicate_key_array_multiple_values_in_array_fields",
+			name:      "duplicate_key_array_multiple_values_in_array_fields_raw",
 			parseType: TypeRequest,
 			mockPlatform: &platform.MockPlatform{
 				GetRequestBodyResponse: `A description of a PR.
@@ -201,10 +229,65 @@ TAG_1=my-tag-value3
 					Params: []any{},
 				},
 			},
-			expStdout: "TAG_1=[\"my-tag-value1\",\"my-tag-value2\",\"my-tag-value3\"]",
+			expStdout: "TAG_1=\"my-tag-value1\",\"my-tag-value2\",\"my-tag-value3\"",
 		},
 		{
-			name:      "json_multiple_array_values_in_array_field",
+			name:      "duplicate_key_array_one_value_not_in_array_fields_json",
+			parseType: TypeRequest,
+			mockPlatform: &platform.MockPlatform{
+				GetRequestBodyResponse: `A description of a PR.
+
+Some details about a PR.
+
+TAG_1=my-tag-value
+`,
+			},
+			tagParser: tags.NewTagParser(ctx, &tags.Config{
+				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
+				Format:               tags.FormatJSON,
+				PrettyPrint:          true,
+			}),
+			expPlatformClientReqs: []*platform.Request{
+				{
+					Name:   "GetRequestBody",
+					Params: []any{},
+				},
+			},
+			expStdout: `{
+  "TAG_1": "my-tag-value"
+}`,
+		},
+		{
+			name:      "duplicate_key_array_one_value_in_array_fields_json",
+			parseType: TypeRequest,
+			mockPlatform: &platform.MockPlatform{
+				GetRequestBodyResponse: `A description of a PR.
+
+Some details about a PR.
+
+TAG_1=my-tag-value
+`,
+			},
+			tagParser: tags.NewTagParser(ctx, &tags.Config{
+				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
+				ArrayFields:          []string{"TAG_1"},
+				Format:               tags.FormatJSON,
+				PrettyPrint:          true,
+			}),
+			expPlatformClientReqs: []*platform.Request{
+				{
+					Name:   "GetRequestBody",
+					Params: []any{},
+				},
+			},
+			expStdout: `{
+  "TAG_1": [
+    "my-tag-value"
+  ]
+}`,
+		},
+		{
+			name:      "multiple_array_values_in_array_field_json",
 			parseType: TypeRequest,
 			mockPlatform: &platform.MockPlatform{
 				GetRequestBodyResponse: `A description of a PR.
@@ -220,6 +303,7 @@ TAG_1=my-tag-value3
 				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
 				ArrayFields:          []string{"TAG_1"},
 				Format:               tags.FormatJSON,
+				PrettyPrint:          true,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -234,6 +318,33 @@ TAG_1=my-tag-value3
     "my-tag-value3"
   ]
 }`,
+		},
+		{
+			name:      "multiple_array_values_in_array_field_json_one_line",
+			parseType: TypeRequest,
+			mockPlatform: &platform.MockPlatform{
+				GetRequestBodyResponse: `A description of a PR.
+
+Some details about a PR.
+
+TAG_1=my-tag-value1
+TAG_1=my-tag-value2
+TAG_1=my-tag-value3
+`,
+			},
+			tagParser: tags.NewTagParser(ctx, &tags.Config{
+				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
+				ArrayFields:          []string{"TAG_1"},
+				Format:               tags.FormatJSON,
+				PrettyPrint:          false,
+			}),
+			expPlatformClientReqs: []*platform.Request{
+				{
+					Name:   "GetRequestBody",
+					Params: []any{},
+				},
+			},
+			expStdout: `{"TAG_1":["my-tag-value1","my-tag-value2","my-tag-value3"]}`,
 		},
 	}
 
