@@ -394,7 +394,7 @@ TAG_1=my-tag-value3
 				t.Errorf("Platform calls not as expected; (-got,+want): %s", diff)
 			}
 
-			if got, want := strings.TrimSpace(stdout.String()), strings.TrimSpace(tc.expStdout); !strings.Contains(got, want) {
+			if got, want := strings.TrimSpace(stdout.String()), strings.TrimSpace(tc.expStdout); got != want {
 				t.Errorf("expected stdout\n\n%s\n\nto contain\n\n%s\n\n", got, want)
 			}
 			if got, want := strings.TrimSpace(stderr.String()), strings.TrimSpace(tc.expStderr); !strings.Contains(got, want) {
