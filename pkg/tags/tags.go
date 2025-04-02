@@ -171,16 +171,20 @@ func stringifyRaw(v any) (string, error) {
 		return s, nil
 	case reflect.Slice:
 		// Do not use MarshalIndent here because we want the output to be on a single line for "raw" output format.
-		jsonBytes, err := json.Marshal(v)
-		if err != nil {
-			return "", fmt.Errorf("failed to parse as array: %w", err)
+		a, ok := v.([]string)
+		if !ok {
+			return "", fmt.Errorf("failed to cast as slice %v", v)
 		}
-		v := string(jsonBytes)
-		if len(v) < 2 {
-			return "", fmt.Errorf("invalid json array %s", v)
+		final := make([]string, len(a))
+		for i, s := range a {
+			final[i] = escapeCommas(s)
 		}
-		return v[1 : len(v)-1], nil
+		return strings.Join(final, ","), nil
 	default:
 		return "", fmt.Errorf("unsupported type for tag strigify %s", v)
 	}
+}
+
+func escapeCommas(v string) string {
+	return strings.ReplaceAll(v, ",", `\,`)
 }

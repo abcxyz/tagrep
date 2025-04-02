@@ -203,7 +203,7 @@ TAG_1=my-tag-value
 					Params: []any{},
 				},
 			},
-			expStdout: "TAG_1=\"my-tag-value\"",
+			expStdout: "TAG_1=my-tag-value",
 		},
 		{
 			name:      "duplicate_key_array_multiple_values_in_array_fields_raw",
@@ -229,7 +229,32 @@ TAG_1=my-tag-value3
 					Params: []any{},
 				},
 			},
-			expStdout: "TAG_1=\"my-tag-value1\",\"my-tag-value2\",\"my-tag-value3\"",
+			expStdout: "TAG_1=my-tag-value1,my-tag-value2,my-tag-value3",
+		},
+		{
+			name:      "commas_are_escaped_correctly",
+			parseType: TypeRequest,
+			mockPlatform: &platform.MockPlatform{
+				GetRequestBodyResponse: `A description of a PR.
+
+Some details about a PR.
+
+TAG_1=some value, ok
+TAG_1=another value, yes
+`,
+			},
+			tagParser: tags.NewTagParser(ctx, &tags.Config{
+				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
+				ArrayFields:          []string{"TAG_1"},
+				Format:               tags.FormatRaw,
+			}),
+			expPlatformClientReqs: []*platform.Request{
+				{
+					Name:   "GetRequestBody",
+					Params: []any{},
+				},
+			},
+			expStdout: `TAG_1=some value\, ok,another value\, yes`,
 		},
 		{
 			name:      "duplicate_key_array_one_value_not_in_array_fields_json",
