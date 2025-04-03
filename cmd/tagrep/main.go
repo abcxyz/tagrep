@@ -31,13 +31,6 @@ import (
 	"github.com/abcxyz/tagrep/pkg/commands/parse"
 )
 
-const (
-	defaultLogLevel  = "warn"
-	defaultLogFormat = "json"
-	defaultLogDebug  = "false"
-	defaultLogTarget = "STDOUT"
-)
-
 // rootCmd defines the starting command structure.
 var rootCmd = func() cli.Command {
 	return &cli.RootCommand{
@@ -75,8 +68,12 @@ func setupMetricsClient(ctx context.Context) context.Context {
 
 func realMain(ctx context.Context) error {
 	start := time.Now()
-	setLogEnvVars()
-	ctx = logging.WithLogger(ctx, logging.NewFromEnv("TAGREP_"))
+	logger := logging.NewFromEnv("TAGREP_",
+		logging.WithDefaultLevel(logging.LevelWarning),
+		logging.WithDefaultFormat(logging.FormatJSON),
+		logging.WithDefaultDebug(false),
+		logging.WithDefaultTarget(os.Stdout))
+	ctx = logging.WithLogger(ctx, logger)
 
 	ctx = setupMetricsClient(ctx)
 	defer func() {
@@ -93,24 +90,4 @@ func realMain(ctx context.Context) error {
 	}()
 
 	return rootCmd().Run(ctx, os.Args[1:]) //nolint:wrapcheck // Want passthrough
-}
-
-// setLogEnvVars set the logging environment variables to their default
-// values if not provided.
-func setLogEnvVars() {
-	if os.Getenv("LOG_FORMAT") == "" {
-		os.Setenv("LOG_FORMAT", defaultLogFormat)
-	}
-
-	if os.Getenv("LOG_LEVEL") == "" {
-		os.Setenv("LOG_LEVEL", defaultLogLevel)
-	}
-
-	if os.Getenv("LOG_DEBUG") == "" {
-		os.Setenv("LOG_DEBUG", defaultLogDebug)
-	}
-
-	if os.Getenv("LOG_TARGET") == "" {
-		os.Setenv("LOG_TARGET", defaultLogTarget)
-	}
 }
