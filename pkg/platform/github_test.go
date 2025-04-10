@@ -68,6 +68,25 @@ func TestGitHubConfigDefaults_Load(t *testing.T) {
 			},
 		},
 		{
+			name: "pull_request_review",
+			githubContext: &githubactions.GitHubContext{
+				Repository: "owner/repo",
+				EventName:  "pull_request_review",
+				Event: map[string]any{
+					"pull_request": map[string]any{
+						"body":   "this-is-a-pull-request-body",
+						"number": 123,
+					},
+				},
+			},
+			exp: &gitHubConfigDefaults{
+				Owner:             "owner",
+				Repo:              "repo",
+				PullRequestNumber: 123,
+				PullRequestBody:   "this-is-a-pull-request-body",
+			},
+		},
+		{
 			name: "merge_group_main_branch",
 			githubContext: &githubactions.GitHubContext{
 				Repository: "owner/repo",
