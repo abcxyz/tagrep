@@ -110,7 +110,6 @@ func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) 
 		} else {
 			logging.DefaultLogger().Warn("parsing pull_request event context failed", "error", err) //nolint:sloglint
 		}
-		break
 	case "pull_request_target":
 		var event github.PullRequestTargetEvent
 		if err := json.Unmarshal(data, &event); err == nil {
@@ -119,7 +118,6 @@ func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) 
 		} else {
 			logging.DefaultLogger().Warn("parsing pull_request_target event context failed", "error", err) //nolint:sloglint
 		}
-		break
 	case "pull_request_review":
 		var event github.PullRequestReviewEvent
 		if err := json.Unmarshal(data, &event); err == nil {
@@ -128,7 +126,6 @@ func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) 
 		} else {
 			logging.DefaultLogger().Warn("parsing pull_request_review event context failed", "error", err) //nolint:sloglint
 		}
-		break
 	case "merge_group":
 		var event github.MergeGroupEvent
 		if err := json.Unmarshal(data, &event); err == nil {
@@ -156,7 +153,6 @@ func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) 
 		} else {
 			logging.DefaultLogger().Warn("parsing issues event context failed", "error", err) //nolint:sloglint
 		}
-		break
 	default:
 		logging.DefaultLogger().Warn("unhandled tagrep github event context type", "context_event_name", githubContext.EventName) //nolint:sloglint
 	}
