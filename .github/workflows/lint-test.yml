@@ -30,6 +30,8 @@ jobs:
     uses: 'abcxyz/pkg/.github/workflows/go-test.yml@main' # ratchet:exclude
 
   tagrep_test:
+    if: |-
+      ${{ contains(fromJSON('["pull_request", "pull_request_review", "pull_request_target", "merge_group"]'), github.event_name) }}
     runs-on: 'ubuntu-latest'
     steps:
       - name: 'Checkout'
