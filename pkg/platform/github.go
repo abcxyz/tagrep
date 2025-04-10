@@ -114,7 +114,6 @@ func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) 
 	case "pull_request_target":
 		var event github.PullRequestTargetEvent
 		if err := json.Unmarshal(data, &event); err == nil {
-			fmt.Println(fmt.Sprintf("DEBUG[DO_NOT_SUBMIT]: %w", event))
 			c.PullRequestNumber = event.GetNumber()
 			c.PullRequestBody = event.GetPullRequest().GetBody()
 		} else {
@@ -124,8 +123,7 @@ func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) 
 	case "pull_request_review":
 		var event github.PullRequestReviewEvent
 		if err := json.Unmarshal(data, &event); err == nil {
-			fmt.Println(fmt.Sprintf("DEBUG[DO_NOT_SUBMIT]: %w", event))
-			c.PullRequestNumber = event.GetNumber()
+			c.PullRequestNumber = event.GetPullRequest().GetNumber()
 			c.PullRequestBody = event.GetPullRequest().GetBody()
 		} else {
 			logging.DefaultLogger().Warn("parsing pull_request_review event context failed", "error", err) //nolint:sloglint
