@@ -101,8 +101,8 @@ func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) 
 	// ignore err because we have no way of returning an error via the flags.Register function.
 	// this is ok beause this is just for defaulting values from the environment.
 	data, _ := json.Marshal(githubContext.Event) //nolint:errchkjson // Shouldnt affect defaults
-
-	if githubContext.EventName == "pull_request" {
+	switch githubContext.EventName {
+	case "pull_request":
 		var event github.PullRequestEvent
 		if err := json.Unmarshal(data, &event); err == nil {
 			c.PullRequestNumber = event.GetNumber()
@@ -110,17 +110,28 @@ func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) 
 		} else {
 			logging.DefaultLogger().Warn("parsing pull_request event context failed", "error", err) //nolint:sloglint
 		}
-	}
-	if githubContext.EventName == "pull_request_target" {
+		break
+	case "pull_request_target":
 		var event github.PullRequestTargetEvent
 		if err := json.Unmarshal(data, &event); err == nil {
+			fmt.Println(fmt.Sprintf("DEBUG[DO_NOT_SUBMIT]: %w", event))
 			c.PullRequestNumber = event.GetNumber()
 			c.PullRequestBody = event.GetPullRequest().GetBody()
 		} else {
 			logging.DefaultLogger().Warn("parsing pull_request_target event context failed", "error", err) //nolint:sloglint
 		}
-	}
-	if githubContext.EventName == "merge_group" {
+		break
+	case "pull_request_review":
+		var event github.PullRequestReviewEvent
+		if err := json.Unmarshal(data, &event); err == nil {
+			fmt.Println(fmt.Sprintf("DEBUG[DO_NOT_SUBMIT]: %w", event))
+			c.PullRequestNumber = event.GetNumber()
+			c.PullRequestBody = event.GetPullRequest().GetBody()
+		} else {
+			logging.DefaultLogger().Warn("parsing pull_request_review event context failed", "error", err) //nolint:sloglint
+		}
+		break
+	case "merge_group":
 		var event github.MergeGroupEvent
 		if err := json.Unmarshal(data, &event); err == nil {
 			matches := mergeGroupPullRequestNumberPattern.FindStringSubmatch(event.GetMergeGroup().GetHeadRef())
@@ -139,8 +150,7 @@ func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) 
 		} else {
 			logging.DefaultLogger().Warn("parsing merge_group event context failed", "error", err) //nolint:sloglint
 		}
-	}
-	if githubContext.EventName == "issues" {
+	case "issues":
 		var event github.IssuesEvent
 		if err := json.Unmarshal(data, &event); err == nil {
 			c.IssueNumber = event.GetIssue().GetNumber()
@@ -148,6 +158,9 @@ func (c *gitHubConfigDefaults) Load(githubContext *githubactions.GitHubContext) 
 		} else {
 			logging.DefaultLogger().Warn("parsing issues event context failed", "error", err) //nolint:sloglint
 		}
+		break
+	default:
+		logging.DefaultLogger().Warn("unhandled tagrep github event context type", "context_event_name", githubContext.EventName) //nolint:sloglint
 	}
 }
 
