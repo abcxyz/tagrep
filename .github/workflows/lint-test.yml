@@ -63,7 +63,6 @@ jobs:
           GOT="$(go run ./cmd/tagrep parse \
             -type=request \
             -format=json \
-            -duplicate-key-strategy=array \
             -pretty \
             -array-tags=SOME_ARRAY_TAG_ON_A_PR \
             -string-tags=SOME_OTHER_TAG_ON_A_PR,SOME_TAG_ON_A_PR \
@@ -91,7 +90,6 @@ jobs:
             -type=issue \
             -format=json \
             -pretty \
-            -duplicate-key-strategy=array \
             -array-tags=MY_ARRAY \
             -output-all \
             -github-issue-number=11)"
