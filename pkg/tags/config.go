@@ -74,7 +74,7 @@ func (c *Config) RegisterFlags(set *cli.FlagSet) {
 		Target:  &c.OutputAll,
 		Example: "true",
 		Default: false,
-		Usage:   "Whether to print out all tags present in the resource or only those explicity set in -array-tags, -string-tags, -bool-tags.",
+		Usage:   "Whether to print out all tags present in the resource or only those explicitly set in -array-tags, -string-tags, -bool-tags.",
 	})
 	f.BoolVar(&cli.BoolVar{
 		Name:    "pretty",

@@ -65,7 +65,7 @@ jobs:
             -format=json \
             -pretty \
             -array-tags=SOME_ARRAY_TAG_ON_A_PR \
-            -string-tags=SOME_OTHER_TAG_ON_A_PR,SOME_TAG_ON_A_PR \
+            -string-tags=SOME_OTHER_TAG_ON_A_PR,SOME_TAG_ON_A_PR,DO_NOT_MODIFY \
             -github-pull-request-number=12)"
           diff <(echo "$GOT") <(echo "$WANT")
 
