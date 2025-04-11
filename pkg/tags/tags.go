@@ -124,7 +124,7 @@ func (p *TagParser) processTagValues(ctx context.Context, key string, ts []strin
 	if slices.Contains(p.cfg.ArrayTags, key) {
 		return ts, nil
 	}
-	if len(ts) > 0 {
+	if len(ts) > 1 {
 		logging.FromContext(ctx).WarnContext(ctx, "encountered duplicate keys that are not in -array-tags. Defaulting to taking the last value.",
 			"key", key,
 			"array_tags", p.cfg.ArrayTags,
