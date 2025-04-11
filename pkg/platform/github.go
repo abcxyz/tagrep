@@ -108,7 +108,7 @@ func (c *gitHubConfigDefaults) Load(ctx context.Context, githubContext *githubac
 			c.PullRequestNumber = event.GetNumber()
 			c.PullRequestBody = event.GetPullRequest().GetBody()
 		} else {
-			logging.FromContext(ctx).Warn("parsing pull_request event context failed", "error", err)
+			logging.FromContext(ctx).WarnContext(ctx, "parsing pull_request event context failed", "error", err)
 		}
 	case "pull_request_target":
 		var event github.PullRequestTargetEvent
@@ -116,7 +116,7 @@ func (c *gitHubConfigDefaults) Load(ctx context.Context, githubContext *githubac
 			c.PullRequestNumber = event.GetNumber()
 			c.PullRequestBody = event.GetPullRequest().GetBody()
 		} else {
-			logging.FromContext(ctx).Warn("parsing pull_request_target event context failed", "error", err)
+			logging.FromContext(ctx).WarnContext(ctx, "parsing pull_request_target event context failed", "error", err)
 		}
 	case "pull_request_review":
 		var event github.PullRequestReviewEvent
@@ -124,7 +124,7 @@ func (c *gitHubConfigDefaults) Load(ctx context.Context, githubContext *githubac
 			c.PullRequestNumber = event.GetPullRequest().GetNumber()
 			c.PullRequestBody = event.GetPullRequest().GetBody()
 		} else {
-			logging.FromContext(ctx).Warn("parsing pull_request_review event context failed", "error", err)
+			logging.FromContext(ctx).WarnContext(ctx, "parsing pull_request_review event context failed", "error", err)
 		}
 	case "merge_group":
 		var event github.MergeGroupEvent
@@ -134,16 +134,16 @@ func (c *gitHubConfigDefaults) Load(ctx context.Context, githubContext *githubac
 				if v, err := strconv.Atoi(matches[1]); err == nil {
 					c.PullRequestNumber = v
 				} else {
-					logging.FromContext(ctx).Warn("parsing merge_group head_ref for pull request number failed",
+					logging.FromContext(ctx).WarnContext(ctx, "parsing merge_group head_ref for pull request number failed",
 						"head_ref", event.GetMergeGroup().GetHeadRef(),
 						"error", err)
 				}
 			} else {
-				logging.FromContext(ctx).Warn("parsing merge_group head_ref for pull request number failed", "head_ref", event.GetMergeGroup().GetHeadRef())
+				logging.FromContext(ctx).WarnContext(ctx, "parsing merge_group head_ref for pull request number failed", "head_ref", event.GetMergeGroup().GetHeadRef())
 			}
 			// Pull request body is not available on the merge_group event.
 		} else {
-			logging.FromContext(ctx).Warn("parsing merge_group event context failed", "error", err)
+			logging.FromContext(ctx).WarnContext(ctx, "parsing merge_group event context failed", "error", err)
 		}
 	case "issues":
 		var event github.IssuesEvent
@@ -151,12 +151,12 @@ func (c *gitHubConfigDefaults) Load(ctx context.Context, githubContext *githubac
 			c.IssueNumber = event.GetIssue().GetNumber()
 			c.IssueBody = event.GetIssue().GetBody()
 		} else {
-			logging.FromContext(ctx).Warn("parsing issues event context failed", "error", err)
+			logging.FromContext(ctx).WarnContext(ctx, "parsing issues event context failed", "error", err)
 		}
 	case "":
-		logging.FromContext(ctx).Info("found no github context event, if you meant to run this in github, something has gone wrong.")
+		logging.FromContext(ctx).InfoContext(ctx, "found no github context event, if you meant to run this in github, something has gone wrong.")
 	default:
-		logging.FromContext(ctx).Warn("unhandled tagrep github event context type", "context_event_name", githubContext.EventName)
+		logging.FromContext(ctx).WarnContext(ctx, "unhandled tagrep github event context type", "context_event_name", githubContext.EventName)
 	}
 }
 
