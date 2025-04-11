@@ -152,13 +152,9 @@ func parseBoolValue(v string) (bool, error) {
 	//   1, t, T, TRUE, true, True, 0, f, F, FALSE, false, False.
 	// https://pkg.go.dev/strconv#ParseBool
 	switch vtl {
-	case "yes":
+	case "yes", "y":
 		return true, nil
-	case "y":
-		return true, nil
-	case "no":
-		return false, nil
-	case "n":
+	case "no", "n":
 		return false, nil
 	default:
 		b, err := strconv.ParseBool(vtl)
