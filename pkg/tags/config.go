@@ -27,25 +27,17 @@ import (
 
 // Config is the configuration needed to parse tags.
 type Config struct {
-	DuplicateKeyStrategy string
-	Format               string
-	ArrayFields          []string
-	PrettyPrint          bool
+	Format      string
+	ArrayTags   []string
+	StringTags  []string
+	BoolTags    []string
+	OutputAll   bool
+	PrettyPrint bool
 }
 
 func (c *Config) RegisterFlags(set *cli.FlagSet) {
 	f := set.NewSection("TAG OPTIONS")
 
-	f.StringVar(&cli.StringVar{
-		Name:    "duplicate-key-strategy",
-		Target:  &c.DuplicateKeyStrategy,
-		Example: "array",
-		Default: DuplicateKeyStrategyArray,
-		Usage:   fmt.Sprintf("How to handle lines with duplicate tag keys. Allowed values are %q. Defaults to concatenating all tag values into an array.", allowedStrategies),
-		Predict: complete.PredictFunc(func(prefix string) []string {
-			return allowedStrategies
-		}),
-	})
 	f.StringVar(&cli.StringVar{
 		Name:    "format",
 		Target:  &c.Format,
@@ -57,11 +49,32 @@ func (c *Config) RegisterFlags(set *cli.FlagSet) {
 		}),
 	})
 	f.StringSliceVar(&cli.StringSliceVar{
-		Name:    "array-fields",
-		Target:  &c.ArrayFields,
+		Name:    "array-tags",
+		Target:  &c.ArrayTags,
 		Example: "TAG_1",
 		Default: []string{},
-		Usage:   "Fields to format as an array. e.g. treat TAG_1 as an array.",
+		Usage:   "Tags to format as an array. e.g. treat TAG_1 as an array.",
+	})
+	f.StringSliceVar(&cli.StringSliceVar{
+		Name:    "string-tags",
+		Target:  &c.StringTags,
+		Example: "TAG_1",
+		Default: []string{},
+		Usage:   "Tags to format as a string. e.g. treat TAG_1 as a string.",
+	})
+	f.StringSliceVar(&cli.StringSliceVar{
+		Name:    "bool-tags",
+		Target:  &c.BoolTags,
+		Example: "TAG_1",
+		Default: []string{},
+		Usage:   "Tags to format as a bool. e.g. treat TAG_1 as a bool.",
+	})
+	f.BoolVar(&cli.BoolVar{
+		Name:    "output-all",
+		Target:  &c.OutputAll,
+		Example: "true",
+		Default: false,
+		Usage:   "Whether to print out all tags present in the resource or only those explicity set in -array-tags, -string-tags, -bool-tags.",
 	})
 	f.BoolVar(&cli.BoolVar{
 		Name:    "pretty",
@@ -72,12 +85,7 @@ func (c *Config) RegisterFlags(set *cli.FlagSet) {
 	})
 
 	set.AfterParse(func(merr error) error {
-		c.DuplicateKeyStrategy = strings.ToLower(strings.TrimSpace(c.DuplicateKeyStrategy))
 		c.Format = strings.ToLower(strings.TrimSpace(c.Format))
-
-		if !slices.Contains(allowedStrategies, c.DuplicateKeyStrategy) {
-			merr = errors.Join(merr, fmt.Errorf("unsupported value for duplicate key strategy flag: %s", c.DuplicateKeyStrategy))
-		}
 
 		if !slices.Contains(allowedFormats, c.Format) {
 			merr = errors.Join(merr, fmt.Errorf("unsupported value for format flag: %s", c.Format))

@@ -24,18 +24,16 @@ import (
 	"regexp"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 
 	"golang.org/x/exp/maps"
 
 	"github.com/abcxyz/pkg/logging"
+	"github.com/abcxyz/pkg/sets"
 )
 
 const (
-	DuplicateKeyStrategyUnspecified = ""
-	DuplicateKeyStrategyTakeLast    = "take-last"
-	DuplicateKeyStrategyArray       = "array"
-
 	FormatUnspecified = ""
 	FormatJSON        = "json"
 	FormatRaw         = "raw"
@@ -44,11 +42,6 @@ const (
 )
 
 var (
-	allowedStrategies = func() []string {
-		allowed := append([]string{}, DuplicateKeyStrategyTakeLast, DuplicateKeyStrategyArray)
-		sort.Strings(allowed)
-		return allowed
-	}()
 	allowedFormats = func() []string {
 		allowed := append([]string{}, FormatJSON, FormatRaw)
 		sort.Strings(allowed)
@@ -70,9 +63,13 @@ func NewTagParser(ctx context.Context, cfg *Config) TagParser {
 func (p *TagParser) ParseTags(ctx context.Context, v string) (string, error) {
 	tagStrs := make(map[string]any)
 	ts := parseTags(ctx, v)
+	targetTags := sets.Union(p.cfg.ArrayTags, p.cfg.StringTags, p.cfg.BoolTags)
 	for k, t := range ts {
 		var err error
 		key := strings.ToUpper(k)
+		if !p.cfg.OutputAll && !slices.Contains(targetTags, key) {
+			continue
+		}
 		if tagStrs[key], err = p.processTagValues(ctx, key, t); err != nil {
 			return "", fmt.Errorf("failed to process duplicate keys: %w", err)
 		}
@@ -124,28 +121,52 @@ func (p *TagParser) format(ctx context.Context, ts map[string]any) (r string, me
 
 // processTagValues either returns an array or a string value depending on the duplicate key strategy.
 func (p *TagParser) processTagValues(ctx context.Context, key string, ts []string) (any, error) {
-	last := ts[len(ts)-1]
-	if len(ts) == 1 && !slices.Contains(p.cfg.ArrayFields, key) {
-		return last, nil
-	}
-	if !slices.Contains(p.cfg.ArrayFields, key) && p.cfg.DuplicateKeyStrategy != DuplicateKeyStrategyTakeLast {
-		logging.FromContext(ctx).WarnContext(ctx, "encountered duplicate keys that are not in array fields. Defaulting to take-last.",
-			"key", key,
-			"array_fields", p.cfg.ArrayFields)
-		return last, nil
-	}
-	switch p.cfg.DuplicateKeyStrategy {
-	case DuplicateKeyStrategyTakeLast:
-		return last, nil
-	case DuplicateKeyStrategyArray:
-		// JSON marshalling is handled in the format method.
+	if slices.Contains(p.cfg.ArrayTags, key) {
 		return ts, nil
-	case DuplicateKeyStrategyUnspecified:
-	default:
-		return nil, fmt.Errorf("processing duplicate key '%s' with invalid duplicate key strategy '%s'",
-			key, p.cfg.DuplicateKeyStrategy)
 	}
-	return nil, fmt.Errorf("unknown error processing duplicate keys")
+	if len(ts) > 0 {
+		logging.FromContext(ctx).WarnContext(ctx, "encountered duplicate keys that are not in -array-tags. Defaulting to taking the last value.",
+			"key", key,
+			"array_tags", p.cfg.ArrayTags,
+			"string_tags", p.cfg.StringTags,
+			"bool_tags", p.cfg.BoolTags)
+	}
+	last := ts[len(ts)-1]
+	if slices.Contains(p.cfg.StringTags, key) {
+		return last, nil
+	}
+	if slices.Contains(p.cfg.BoolTags, key) {
+		b, err := parseBoolValue(last)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse bool: %w", err)
+		}
+		return b, nil
+	}
+
+	return last, nil
+}
+
+func parseBoolValue(v string) (bool, error) {
+	vtl := strings.ToLower(strings.TrimSpace(v))
+	// Handle cases not handled in ParseBool, which accepts:
+	//   1, t, T, TRUE, true, True, 0, f, F, FALSE, false, False.
+	// https://pkg.go.dev/strconv#ParseBool
+	switch vtl {
+	case "yes":
+		return true, nil
+	case "y":
+		return true, nil
+	case "no":
+		return false, nil
+	case "n":
+		return false, nil
+	default:
+		b, err := strconv.ParseBool(vtl)
+		if err != nil {
+			return false, fmt.Errorf("failed to parse %s as bool: %w", vtl, err)
+		}
+		return b, nil
+	}
 }
 
 func parseTags(ctx context.Context, v string) map[string][]string {
@@ -169,6 +190,12 @@ func stringifyRaw(v any) (string, error) {
 			return "", fmt.Errorf("failed to cast string as string %s", v)
 		}
 		return s, nil
+	case reflect.Bool:
+		b, ok := v.(bool)
+		if !ok {
+			return "", fmt.Errorf("failed to cast string as bool %s", v)
+		}
+		return strconv.FormatBool(b), nil
 	case reflect.Slice:
 		// Do not use MarshalIndent here because we want the output to be on a single line for "raw" output format.
 		a, ok := v.([]string)
