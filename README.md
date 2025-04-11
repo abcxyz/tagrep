@@ -137,7 +137,10 @@ tagrep:
     env:
       GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
     run: |
-      tagrep parse -type={{type}} -format=raw >> "$GITHUB_ENV"
+      tags="$(tagrep parse -type={{type}} -format=raw 2> tagrep.log)"
+      cat tagrep.log
+      echo "tags -> $tags"
+      echo "$tags" >> "$GITHUB_ENV"
 
   - name: 'Print out env vars'
     shell: 'bash'
@@ -161,7 +164,10 @@ tagrep:
     env:
       GITHUB_TOKEN: '${{ secrets.GITHUB_TOKEN }}'
     run: |
-      echo "tags=$(tagrep parse -type={{type}} -format=json)" >> "$GITHUB_OUTPUT"
+      tags="$(tagrep parse -type={{type}} -format=json 2> tagrep.log)"
+      cat tagrep.log
+      echo "tags -> $tags"
+      echo "$tags" >> "$GITHUB_OUTPUT"
 
   - name: 'Print output'
     shell: 'bash'
