@@ -19,10 +19,14 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 	"github.com/sethvargo/go-githubactions"
+
+	"github.com/abcxyz/pkg/logging"
 )
 
 func TestGitHubConfigDefaults_Load(t *testing.T) {
 	t.Parallel()
+
+	ctx := logging.WithLogger(t.Context(), logging.TestLogger(t))
 
 	cases := []struct {
 		name          string
@@ -165,7 +169,7 @@ func TestGitHubConfigDefaults_Load(t *testing.T) {
 			t.Parallel()
 
 			c := &gitHubConfigDefaults{}
-			c.Load(tc.githubContext)
+			c.Load(ctx, tc.githubContext)
 
 			if diff := cmp.Diff(c, tc.exp); diff != "" {
 				t.Errorf("GitHubConfigDefaults not as expected; (-got,+want): %s", diff)
