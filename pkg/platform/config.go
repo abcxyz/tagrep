@@ -15,6 +15,7 @@
 package platform
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -33,7 +34,7 @@ type Config struct {
 	GitLab gitLabConfig
 }
 
-func (c *Config) RegisterFlags(set *cli.FlagSet) {
+func (c *Config) RegisterFlagsContext(ctx context.Context, set *cli.FlagSet) {
 	f := set.NewSection("PLATFORM OPTIONS")
 	// Type value is loaded in the following order:
 	//
@@ -51,8 +52,8 @@ func (c *Config) RegisterFlags(set *cli.FlagSet) {
 	})
 
 	// leave last to put help under platform options
-	c.GitHub.RegisterFlags(set)
-	c.GitLab.RegisterFlags(set)
+	c.GitHub.RegisterFlagsContext(ctx, set)
+	c.GitLab.RegisterFlagsContext(ctx, set)
 
 	set.AfterParse(func(merr error) error {
 		c.Type = strings.ToLower(strings.TrimSpace(c.Type))

@@ -79,12 +79,14 @@ tagrep parse -type=request -format=json
 
 #### CLI Flags
 
-| flag                      | required | possible values      | description                                                                                                                                                           |
-|---------------------------|----------|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `-type`                   | x        | `issue`, `request`   | Whether to fetch a github/gitlab issue or pull/merge request.                                                                                                         |
-| `-format`                 |          | `json`, `raw`        | The format to output as. `json` will output as a single json object. `raw` will output as separate rows parsable into env variables.                                  |
-| `-duplicate-key-strategy` |          | `take-last`, `array` | How to handle multiple lines with the same tag key. `array` will concatenate the values indicated by `-array-fields` into a json array (even if the format is `raw`). |
-| `-array-fields`           |          | {{any}}              | The fields that should be treated as an array. To be combined with `-duplicate-key-strategy=array`                                                                    |
+| flag           | required | possible values    | description                                                                                                                                                    |
+|----------------|----------|--------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `-type`        | x        | `issue`, `request` | Whether to fetch a github/gitlab issue or pull/merge request.                                                                                                  |
+| `-format`      |          | `json`, `raw`      | The format to output as. `json` will output as a single json object. `raw` will output as separate rows parsable into env variables.                           |
+| `-array-tags`  |          | {{any}}            | The tags that should be treated as an array.                                                                                                                   |
+| `-string-tags` |          | {{any}}            | The tags that should be treated as a string.                                                                                                                   |
+| `-bool-tags`   |          | {{any}}            | The tags that should be treated as a bool.                                                                                                                     |
+| `-output-all`  |          | true,false         | Whether to output all found tags or just those in `-array-tags`, `-string-tags`, and `-bool-tags`. Defaults to false (just those in the `-{type}-tags` flags). |
 
 #### GitHub Optional Flags
 

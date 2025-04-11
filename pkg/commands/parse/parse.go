@@ -85,10 +85,10 @@ Usage: {{ COMMAND }} [options]
 `
 }
 
-func (c *ParseCommand) Flags() *cli.FlagSet {
+func (c *ParseCommand) FlagsContext(ctx context.Context) *cli.FlagSet {
 	set := c.NewFlagSet()
 
-	c.platformConfig.RegisterFlags(set)
+	c.platformConfig.RegisterFlagsContext(ctx, set)
 	c.tagsConfig.RegisterFlags(set)
 
 	f := set.NewSection("TAGREP OPTIONS")
@@ -119,7 +119,7 @@ func (c *ParseCommand) Flags() *cli.FlagSet {
 func (c *ParseCommand) Run(ctx context.Context, args []string) error {
 	metricswrap.WriteMetric(ctx, "command_request", 1)
 
-	f := c.Flags()
+	f := c.FlagsContext(ctx)
 	if err := f.Parse(args); err != nil {
 		return fmt.Errorf("failed to parse flags: %w", err)
 	}

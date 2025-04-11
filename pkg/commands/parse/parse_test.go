@@ -46,8 +46,7 @@ func TestParse_ProcessRequest(t *testing.T) {
 			parseType:    TypeRequest,
 			mockPlatform: &platform.MockPlatform{},
 			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyTakeLast,
-				Format:               tags.FormatRaw,
+				Format: tags.FormatRaw,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -57,7 +56,7 @@ func TestParse_ProcessRequest(t *testing.T) {
 			},
 		},
 		{
-			name:      "single_value_tags",
+			name:      "empty_when_tag_not_explicitly_set",
 			parseType: TypeRequest,
 			mockPlatform: &platform.MockPlatform{
 				GetRequestBodyResponse: `A description of a PR.
@@ -70,8 +69,32 @@ TAG_3=A message about the tag. Something.
 `,
 			},
 			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyTakeLast,
-				Format:               tags.FormatRaw,
+				Format: tags.FormatRaw,
+			}),
+			expPlatformClientReqs: []*platform.Request{
+				{
+					Name:   "GetRequestBody",
+					Params: []any{},
+				},
+			},
+			expStdout: "",
+		},
+		{
+			name:      "output_all",
+			parseType: TypeRequest,
+			mockPlatform: &platform.MockPlatform{
+				GetRequestBodyResponse: `A description of a PR.
+
+Some details about a PR.
+
+TAG_1=my-tag-value
+TAG_2=123143
+TAG_3=A message about the tag. Something.
+`,
+			},
+			tagParser: tags.NewTagParser(ctx, &tags.Config{
+				Format:    tags.FormatRaw,
+				OutputAll: true,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -85,7 +108,7 @@ TAG_2=123143
 TAG_3=A message about the tag. Something.`,
 		},
 		{
-			name:      "all_output_upper_case",
+			name:      "output_all_upper_case",
 			parseType: TypeRequest,
 			mockPlatform: &platform.MockPlatform{
 				GetRequestBodyResponse: `A description of a PR.
@@ -98,8 +121,8 @@ tag_3=A message about the tag. Something.
 `,
 			},
 			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyTakeLast,
-				Format:               tags.FormatRaw,
+				Format:    tags.FormatRaw,
+				OutputAll: true,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -109,6 +132,36 @@ tag_3=A message about the tag. Something.
 			},
 			expStdout: `
 TAG_1=my-tag-value
+TAG_2=123143
+TAG_3=A message about the tag. Something.`,
+		},
+		{
+			name:      "output_all_respects_array_tag",
+			parseType: TypeRequest,
+			mockPlatform: &platform.MockPlatform{
+				GetRequestBodyResponse: `A description of a PR.
+
+Some details about a PR.
+
+TAG_1=my-tag-value1
+TAG_1=my-tag-value2
+TAG_2=123143
+TAG_3=A message about the tag. Something.
+`,
+			},
+			tagParser: tags.NewTagParser(ctx, &tags.Config{
+				Format:    tags.FormatRaw,
+				OutputAll: true,
+				ArrayTags: []string{"TAG_1"},
+			}),
+			expPlatformClientReqs: []*platform.Request{
+				{
+					Name:   "GetRequestBody",
+					Params: []any{},
+				},
+			},
+			expStdout: `
+TAG_1=my-tag-value1,my-tag-value2
 TAG_2=123143
 TAG_3=A message about the tag. Something.`,
 		},
@@ -124,8 +177,8 @@ TAG_2=123143
 `,
 			},
 			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyTakeLast,
-				Format:               tags.FormatRaw,
+				Format:    tags.FormatRaw,
+				OutputAll: true,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -136,30 +189,7 @@ TAG_2=123143
 			expStdout: "TAG_2=123143",
 		},
 		{
-			name:      "ignores_tag_inline",
-			parseType: TypeRequest,
-			mockPlatform: &platform.MockPlatform{
-				GetRequestBodyResponse: `A description of a PR.
-
-Some details about a PR. TAG_1=my-tag-value
-
-TAG_2=123143
-`,
-			},
-			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyTakeLast,
-				Format:               tags.FormatRaw,
-			}),
-			expPlatformClientReqs: []*platform.Request{
-				{
-					Name:   "GetRequestBody",
-					Params: []any{},
-				},
-			},
-			expStdout: "TAG_2=123143",
-		},
-		{
-			name:      "duplicate_key_array_one_value_not_in_array_fields_raw",
+			name:      "one_value_in_array_fields_raw",
 			parseType: TypeRequest,
 			mockPlatform: &platform.MockPlatform{
 				GetRequestBodyResponse: `A description of a PR.
@@ -170,8 +200,8 @@ TAG_1=my-tag-value
 `,
 			},
 			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
-				Format:               tags.FormatRaw,
+				ArrayTags: []string{"TAG_1"},
+				Format:    tags.FormatRaw,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -182,31 +212,7 @@ TAG_1=my-tag-value
 			expStdout: "TAG_1=my-tag-value",
 		},
 		{
-			name:      "duplicate_key_array_one_value_in_array_fields_raw",
-			parseType: TypeRequest,
-			mockPlatform: &platform.MockPlatform{
-				GetRequestBodyResponse: `A description of a PR.
-
-Some details about a PR.
-
-TAG_1=my-tag-value
-`,
-			},
-			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
-				ArrayFields:          []string{"TAG_1"},
-				Format:               tags.FormatRaw,
-			}),
-			expPlatformClientReqs: []*platform.Request{
-				{
-					Name:   "GetRequestBody",
-					Params: []any{},
-				},
-			},
-			expStdout: "TAG_1=my-tag-value",
-		},
-		{
-			name:      "duplicate_key_array_multiple_values_in_array_fields_raw",
+			name:      "multiple_values_in_array_fields_raw",
 			parseType: TypeRequest,
 			mockPlatform: &platform.MockPlatform{
 				GetRequestBodyResponse: `A description of a PR.
@@ -219,9 +225,8 @@ TAG_1=my-tag-value3
 `,
 			},
 			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
-				ArrayFields:          []string{"TAG_1"},
-				Format:               tags.FormatRaw,
+				ArrayTags: []string{"TAG_1"},
+				Format:    tags.FormatRaw,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -244,9 +249,8 @@ TAG_1=another value, yes
 `,
 			},
 			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
-				ArrayFields:          []string{"TAG_1"},
-				Format:               tags.FormatRaw,
+				ArrayTags: []string{"TAG_1"},
+				Format:    tags.FormatRaw,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -257,7 +261,7 @@ TAG_1=another value, yes
 			expStdout: `TAG_1=some value\, ok,another value\, yes`,
 		},
 		{
-			name:      "duplicate_key_array_one_value_not_in_array_fields_json",
+			name:      "one_value_in_array_fields_json",
 			parseType: TypeRequest,
 			mockPlatform: &platform.MockPlatform{
 				GetRequestBodyResponse: `A description of a PR.
@@ -268,36 +272,9 @@ TAG_1=my-tag-value
 `,
 			},
 			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
-				Format:               tags.FormatJSON,
-				PrettyPrint:          true,
-			}),
-			expPlatformClientReqs: []*platform.Request{
-				{
-					Name:   "GetRequestBody",
-					Params: []any{},
-				},
-			},
-			expStdout: `{
-  "TAG_1": "my-tag-value"
-}`,
-		},
-		{
-			name:      "duplicate_key_array_one_value_in_array_fields_json",
-			parseType: TypeRequest,
-			mockPlatform: &platform.MockPlatform{
-				GetRequestBodyResponse: `A description of a PR.
-
-Some details about a PR.
-
-TAG_1=my-tag-value
-`,
-			},
-			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
-				ArrayFields:          []string{"TAG_1"},
-				Format:               tags.FormatJSON,
-				PrettyPrint:          true,
+				ArrayTags:   []string{"TAG_1"},
+				Format:      tags.FormatJSON,
+				PrettyPrint: true,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -325,10 +302,9 @@ TAG_1=my-tag-value3
 `,
 			},
 			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
-				ArrayFields:          []string{"TAG_1"},
-				Format:               tags.FormatJSON,
-				PrettyPrint:          true,
+				ArrayTags:   []string{"TAG_1"},
+				Format:      tags.FormatJSON,
+				PrettyPrint: true,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -358,10 +334,9 @@ TAG_1=my-tag-value3
 `,
 			},
 			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyArray,
-				ArrayFields:          []string{"TAG_1"},
-				Format:               tags.FormatJSON,
-				PrettyPrint:          false,
+				ArrayTags:   []string{"TAG_1"},
+				Format:      tags.FormatJSON,
+				PrettyPrint: false,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -370,6 +345,140 @@ TAG_1=my-tag-value3
 				},
 			},
 			expStdout: `{"TAG_1":["my-tag-value1","my-tag-value2","my-tag-value3"]}`,
+		},
+		{
+			name:      "string_tags",
+			parseType: TypeRequest,
+			mockPlatform: &platform.MockPlatform{
+				GetRequestBodyResponse: `A description of a PR.
+
+Some details about a PR.
+
+TAG_1=my-tag-value1
+TAG_2=my-tag-value2
+`,
+			},
+			tagParser: tags.NewTagParser(ctx, &tags.Config{
+				StringTags: []string{"TAG_1", "TAG_2"},
+				Format:     tags.FormatRaw,
+			}),
+			expPlatformClientReqs: []*platform.Request{
+				{
+					Name:   "GetRequestBody",
+					Params: []any{},
+				},
+			},
+			expStdout: `
+TAG_1=my-tag-value1
+TAG_2=my-tag-value2`,
+		},
+		{
+			name:      "bool_tags",
+			parseType: TypeRequest,
+			mockPlatform: &platform.MockPlatform{
+				GetRequestBodyResponse: `A description of a PR.
+
+Some details about a PR.
+
+TAG_1=yes
+TAG_2=0
+TAG_3=FALSE
+TAG_4=True
+TAG_5=t
+TAG_6=y
+TAG_7=n
+TAG_8=no
+`,
+			},
+			tagParser: tags.NewTagParser(ctx, &tags.Config{
+				BoolTags: []string{"TAG_1", "TAG_2", "TAG_3", "TAG_4", "TAG_5", "TAG_6", "TAG_7", "TAG_8"},
+				Format:   tags.FormatRaw,
+			}),
+			expPlatformClientReqs: []*platform.Request{
+				{
+					Name:   "GetRequestBody",
+					Params: []any{},
+				},
+			},
+			expStdout: `
+TAG_1=true
+TAG_2=false
+TAG_3=false
+TAG_4=true
+TAG_5=true
+TAG_6=true
+TAG_7=false
+TAG_8=false`,
+		},
+		{
+			name:      "bool_tags_json",
+			parseType: TypeRequest,
+			mockPlatform: &platform.MockPlatform{
+				GetRequestBodyResponse: `A description of a PR.
+
+Some details about a PR.
+
+TAG_1=yes
+TAG_2=0
+TAG_3=FALSE
+TAG_4=True
+TAG_5=t
+TAG_6=y
+TAG_7=n
+TAG_8=no
+`,
+			},
+			tagParser: tags.NewTagParser(ctx, &tags.Config{
+				BoolTags: []string{"TAG_1", "TAG_2", "TAG_3", "TAG_4", "TAG_5", "TAG_6", "TAG_7", "TAG_8"},
+				Format:   tags.FormatJSON,
+			}),
+			expPlatformClientReqs: []*platform.Request{
+				{
+					Name:   "GetRequestBody",
+					Params: []any{},
+				},
+			},
+			expStdout: `{"TAG_1":true,"TAG_2":false,"TAG_3":false,"TAG_4":true,"TAG_5":true,"TAG_6":true,"TAG_7":false,"TAG_8":false}`,
+		},
+		{
+			name:      "all_tag_types",
+			parseType: TypeRequest,
+			mockPlatform: &platform.MockPlatform{
+				GetRequestBodyResponse: `A description of a PR.
+
+Some details about a PR.
+
+TAG_1=yes
+TAG_2=0
+TAG_3=FALSE
+TAG_4=True
+TAG_5=t
+TAG_6=y
+TAG_7=n
+TAG_8=no
+`,
+			},
+			tagParser: tags.NewTagParser(ctx, &tags.Config{
+				BoolTags:   []string{"TAG_1", "TAG_2"},
+				StringTags: []string{"TAG_3", "TAG_4", "TAG_5", "TAG_6"},
+				ArrayTags:  []string{"TAG_7", "TAG_8"},
+				Format:     tags.FormatRaw,
+			}),
+			expPlatformClientReqs: []*platform.Request{
+				{
+					Name:   "GetRequestBody",
+					Params: []any{},
+				},
+			},
+			expStdout: `
+TAG_1=true
+TAG_2=false
+TAG_3=FALSE
+TAG_4=True
+TAG_5=t
+TAG_6=y
+TAG_7=n
+TAG_8=no`,
 		},
 	}
 
@@ -424,8 +533,7 @@ func TestParse_ProcessIssue(t *testing.T) {
 			parseType:    TypeIssue,
 			mockPlatform: &platform.MockPlatform{},
 			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyTakeLast,
-				Format:               tags.FormatRaw,
+				Format: tags.FormatRaw,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{
@@ -448,8 +556,8 @@ TAG_3=A message about the tag. Something.
 `,
 			},
 			tagParser: tags.NewTagParser(ctx, &tags.Config{
-				DuplicateKeyStrategy: tags.DuplicateKeyStrategyTakeLast,
-				Format:               tags.FormatRaw,
+				Format:    tags.FormatRaw,
+				OutputAll: true,
 			}),
 			expPlatformClientReqs: []*platform.Request{
 				{

@@ -98,7 +98,7 @@ func (c *gitLabPredefinedConfig) Load() {
 	}
 }
 
-func (c *gitLabConfig) RegisterFlags(set *cli.FlagSet) {
+func (c *gitLabConfig) RegisterFlagsContext(ctx context.Context, set *cli.FlagSet) {
 	f := set.NewSection("GITLAB OPTIONS")
 
 	cfgDefaults := &gitLabPredefinedConfig{}
