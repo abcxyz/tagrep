@@ -21,7 +21,7 @@ permissions:
 
 jobs:
   go_test:
-    uses: 'abcxyz/pkg/.github/workflows/go-test.yml@main' # ratchet:exclude
+    uses: 'abcxyz/actions/.github/workflows/go-test.yml@main' # ratchet:exclude
 
   tagrep_test:
     if: |-
