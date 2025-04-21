@@ -189,7 +189,7 @@ jobs:
         run: |-
           cd dist/
 
-          for BINARY in $(find * -type f); do
+          while IFS= read -r -d '' BINARY; do
             chmod +x "${BINARY}"
 
             FOLDER="$(basename "${BINARY}" ".exe")"
@@ -209,12 +209,11 @@ jobs:
               mv "${BINARY}" "${NAME}"
               (tar -czvf "${FOLDER}.tar.gz" "${NAME}" && rm -rf "${NAME}") &
             fi
-          done
+          done <   <(find . -type f -printf '%P\0')
           wait
 
-          FILES="$(find * -name '*.tar.gz' -o -name '*.zip')"
-          sha256sum ${FILES} > SHA256SUMS
-          sha512sum ${FILES} > SHA512SUMS
+          find . \( -name '*.tar.gz' -o -name '*.zip' \) -type f -printf '%P\0' | xargs -0 sha256sum > SHA256SUMS
+          find . \( -name '*.tar.gz' -o -name '*.zip' \) -type f -printf '%P\0' | xargs -0 sha512sum > SHA512SUMS
 
       - name: 'Upload binaries'
         env:
@@ -223,6 +222,7 @@ jobs:
           REPO: '${{ github.repository }}'
         run: |-
           FILES="$(find ./dist -type f)"
+          # shellcheck disable=SC2086
           gh release upload "${RELEASE_VERSION}" ${FILES} \
             --repo "${REPO}"
 
