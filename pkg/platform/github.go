@@ -69,8 +69,11 @@ type gitHubConfig struct {
 	GitHubAppPrivateKeyPEM  string
 	Permissions             map[string]string
 
+	// Enterprise
+	GitHubServerURL string
+	GitHubAPIURL    string
+
 	GitHubEventName         string
-	GitHubServerURL         string
 	GitHubRunID             int64
 	GitHubRunAttempt        int64
 	GitHubJob               string
@@ -218,11 +221,21 @@ func (c *gitHubConfig) RegisterFlagsContext(ctx context.Context, set *cli.FlagSe
 	})
 
 	f.StringVar(&cli.StringVar{
-		Name:   "github-server-url",
-		EnvVar: "GITHUB_SERVER_URL",
-		Target: &c.GitHubServerURL,
-		Usage:  "The GitHub server URL.",
-		Hidden: true,
+		Name:    "github-server-url",
+		EnvVar:  "GITHUB_SERVER_URL",
+		Target:  &c.GitHubServerURL,
+		Usage:   "The GitHub server URL.",
+		Default: "https://github.com",
+		Hidden:  true,
+	})
+
+	f.StringVar(&cli.StringVar{
+		Name:    "github-api-url",
+		EnvVar:  "GITHUB_API_URL",
+		Target:  &c.GitHubAPIURL,
+		Usage:   "The API URL of the GitHub instance.",
+		Default: "https://api.github.com/",
+		Hidden:  true,
 	})
 
 	f.Int64Var(&cli.Int64Var{
@@ -374,7 +387,10 @@ func NewGitHub(ctx context.Context, cfg *gitHubConfig) (*GitHub, error) {
 
 	tc := oauth2.NewClient(ctx, ts)
 
-	client := github.NewClient(tc)
+	client, err := github.NewEnterpriseClient(cfg.GitHubAPIURL, cfg.GitHubServerURL, tc)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GitHub client: %w", err)
+	}
 
 	g := &GitHub{
 		cfg:    cfg,
