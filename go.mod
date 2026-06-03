@@ -3,7 +3,7 @@ module github.com/abcxyz/tagrep
 go 1.24
 
 require (
-	github.com/abcxyz/abc-updater v0.4.0
+	github.com/abcxyz/abc-updater v0.4.1
 	github.com/abcxyz/pkg v1.5.4
 	github.com/google/go-cmp v0.7.0
 	github.com/google/go-github/v53 v53.2.0
