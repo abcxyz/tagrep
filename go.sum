@@ -1,7 +1,7 @@
 github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8 h1:wPbRQzjjwFc0ih8puEVAOFGELsn1zoIIYdxvML7mDxA=
 github.com/ProtonMail/go-crypto v0.0.0-20230217124315-7d5c6f04bbb8/go.mod h1:I0gYDMZ6Z5GRU7l58bNFSkPTFN6Yl12dsUlAZ8xy98g=
-github.com/abcxyz/abc-updater v0.4.0 h1:bPEqkc77fm4zRRa0LW4PrJvKuLZCmNF2u/kIc6RZYUc=
-github.com/abcxyz/abc-updater v0.4.0/go.mod h1:t8QKGyq682NiuXeNGfbXaMl1jisYrSd7wV55nMm9uvM=
+github.com/abcxyz/abc-updater v0.4.1 h1:Jr4SfzHrgbzg9Kgxmd8cZCoenAim679uKYtUPn7nFyE=
+github.com/abcxyz/abc-updater v0.4.1/go.mod h1:jinjDR9CE9p5H+QAI/n/udxYJY92mIHEErGDlArqON4=
 github.com/abcxyz/pkg v1.5.4 h1:paJIpVQWNRXoJVsyQK2ffNC5XmO5C3t5PmoZ+Es4VKQ=
 github.com/abcxyz/pkg v1.5.4/go.mod h1:d7A2dr7+DKp/H6OxKN/0XN2pdb797DokqFfPNSjrRDs=
 github.com/bwesterb/go-ristretto v1.2.0/go.mod h1:fUIoIZaG73pV5biE2Blr2xEzDoMj7NFEuV9ekS419A0=
